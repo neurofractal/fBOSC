@@ -1,0 +1,14 @@
+*
+!*.*
+!*/
+**/NoiseTools
+**/fieldtrip
+*.m~
+*.xlsx
+*.mat
+!*util/1160_rest_EEG_Rlm_Fhl_rdSeg_Art_EC.mat
+*.png
+*.txt
+*.csv
+.DS_Store
+._*
