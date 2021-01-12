@@ -36,15 +36,24 @@ The extended BOSC (eBOSC) toolbox allows the user to define peaks in the power s
 
 **2. Both standard BOSC and eBOSC assume a single 1/f like characteristic to the aperiodic component, meaning it looks linear across all frequencies in log-log space. This is often not the case for neural data, especially across larger frequency ranges and MEG data. A linear fit in log-log space, is therefore not always suitable for electrophysiological data. See the [fooof documentation](https://fooof-tools.github.io/fooof/auto_tutorials/plot_05-AperiodicFitting.html) for more information.**
 
+![](./media/example_no_fooof.png)
+
+*This is an example where eBOSC hasn't worked very well. A linear fit is unsuitable for this dataset.*
+
 The parametisation tools from FOOOF can address these issues. Firstly, FOOOF  performs a sequential decomposition of the power spectrum into aperiodic and periodic components, optimizing the modelled spectrum using a least-squared-error approach. Secondly, FOOOF can (optionally) fit a "knee" parameter during the aperiodic fit when the aperiodic features of the spectrum plotted in log-log space are not linear.
+
+![](./media/example_with_fooof.png)
+
+*fBOSC seems to fit the 1/f aperiodic signal much better and therefore sets a more sensible power threshold for subsequent oscillation detection*
+
 
 ## So how do I use fBOSC?
 
-1. Download fBOSC
+#### 1. Download fBOSC
 
 From [https://github.com/neurofractal/fBOSC](https://github.com/neurofractal/fBOSC)
 
-2. Install FOOOF (a python package)
+#### 2. Install FOOOF (a python package)
 
 The [FOOOF documentation](https://fooof-tools.github.io/fooof/index.html#installation) has clear + simple instructions for installing the package. You will also need to install scipy and numpy.
 
@@ -52,7 +61,7 @@ Getting MATLAB and python to talk properly is tricker. Please refer to this [blo
 
 *N.B. On my mac I had to rename /Applications/MATLAB_R2016b.app/sys/os/maci64/libgfortran.3.dylib to libgfortran.3.dylib.old to let Matlab search for the gcc gfortran*
 
-3. Start up fBOSC + run start_fBOSC
+#### 3. Start up fBOSC + run start_fBOSC
 
 ```matlab
 cd(path_to_fBOSC);
@@ -63,7 +72,7 @@ start_fBOSC
 
 As you can see both the eBOSC and fooof_mat folders are present, along with the fBOSC scripts in the 'custom' folder. 
 
-4. Try out the test script for examples
+#### 4. Try out the test script for examples
 
 **[LINK](./custom/test_fBOSC.m)**
 
