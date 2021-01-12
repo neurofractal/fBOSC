@@ -8,7 +8,11 @@ The Better oscillation detection (BOSC) method has been widely used to character
 
 The power threshold is determined by first modelling the background aperiodic (1/f) neural spectrum. For each frequency of interest a probability distribution function is fitted to the (linear) aperiodic fit (using a χ2 distribution). The power threshold is then typically set on the 95th percentile of the χ2(2) distribution. This ensures only quantitativly large increases in neural power (above and beyond the aperiodic signal) are classed as potential 'oscillations'.
 
+![](./media/power_thresh.png)
+
 The duration threshold is usually set at 2-3 oscillatory cycles. 
+
+![](./media/duration_thresh.png)
 
 In the time domain, if both power and duration thresholds are passed an oscillation is said to be "detected".
 
@@ -23,8 +27,11 @@ FOOOF conceives of a model of the power spectrum as a combination of two distinc
 
 *(Text copied from the FOOOF documentation)*
 
+![](./media/fooof_example.png)
 
-## So why use FOOOF at all?
+## So why use FOOOF in combination with BOSC?
+
+In short, it provides more robust and flexible way of parametising the aperiodic 1/f component of neural data.
 
 As noted by Kosciessa et al., (2020), the standard BOSC analysis applies "a linear fit in log-log space to define the background power, which may overestimate the background at the frequencies of interest in the case of data with large rhythmic peaks." 
 
