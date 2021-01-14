@@ -51,7 +51,12 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
         
     % Run fooof
     % FOOOF settings
-    settings = cfg.fBOSC.fooof;  % Use defaults
+    if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
+        settings = struct();
+        setting.verbose = 0; % Use defaults
+    else
+        settings = cfg.fBOSC.fooof;  
+    end
     f_range = [freqs(1), freqs(end)];
 
     % Run FOOOF
@@ -67,6 +72,11 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     pv(1) = b(2); pv(2) = b(1);
     
     mp_old = 10.^(polyval(pv,log10(cfg.fBOSC.F))); 
+    
+    % Force use of old mp value
+    if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
+        mp = mp_old;
+    end
     
     % compute fBOSC power (pt) and duration (dt) thresholds: 
     % power threshold is based on a chi-square distribution with df=2 and mean as estimated above

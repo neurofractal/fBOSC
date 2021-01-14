@@ -16,7 +16,7 @@ start_fBOSC
 %% fBOSC parameters
 
 % general setup
-cfg.fBOSC.F             = [3:1:50];    % frequency sampling
+cfg.fBOSC.F             = [3:1:30];    % frequency sampling
 cfg.fBOSC.wavenumber	= 6;           % wavelet family parameter (time-frequency tradeoff)
 cfg.fBOSC.fsample       = 500;         % current sampling frequency of EEG data
 
