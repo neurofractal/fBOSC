@@ -53,6 +53,31 @@ The parametisation tools from FOOOF can address these issues. Firstly, FOOOF  pe
 
 *fBOSC seems to fit the 1/f aperiodic signal much better and therefore sets a more sensible power threshold for subsequent oscillation detection*
 
+## Does this really help?
+
+YES! 
+
+In this example, I have simulated data with a nonlinear aperiodic frequency spectrum, alongside two oscillatory signals at 4Hz and 10Hz. The frequency spectrum is plotted in the thick black line. 
+
+![](./media/SNR23_synaptic.png)
+
+The coloured dotted lines are the power thresholds computed using using BOSC (no frequencies excluded) and eBOSC (frequencies around the theta and alpha peaks excluded), and fBOSC. 
+
+Because we know apriori, the exact characteristics of the original aperiodic data, we can compute the root mean squared error (RMSE) from the 1/f fits estimated using BOSC, eBOSC and fBOSC:
+
+![](./media/fBOSC_RMSE.png)
+
+The RMSE is consistently lower for fBOSC compared with the other two methods in this example.
+
+## What are the consequences of a poor 1/f fit?
+
+In the worst circumstances, at a particular fBOSC threshold (e.g. 0.95) your sensitivity for detecting oscillations will vary between different frequency bands.
+
+**THIS IS NOT IDEAL.** 
+
+In our non-linear 1/f + alpha + theta oscillation simulations, we can get drastically different sensitivities for detecting theta and alpha oscillations for both BOSC and eBOSC. This effect is especially pronunced at lower SNRs. However fBOSC has very similar hit-rates between theta and alpha at all SNRs.
+
+![](./media/fBOSC_per_freq.png)
 
 ## So how do I use fBOSC?
 
@@ -79,7 +104,7 @@ start_fBOSC
 
 As you can see both the eBOSC and fooof_mat folders are present, along with the fBOSC scripts in the 'custom' folder. 
 
-#### 4. Try out the test script for examples
+#### 4. Try out the test script for examples (WORK IN PROGRESS)
 
 **[LINK](./custom/test_fBOSC.m)**
 
