@@ -33,14 +33,17 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
 %                   | pt: power threshold
 %           pt | empirical power threshold
 %           dt | duration threshold
+    
+    
 
-
-    % average power estimates across periods of interest
-    BG = [];
-    for indTrial = 1:numel(cfg.fBOSC.trial_background)
-        % remove BGpad at beginning and end to avoid edge artifacts
-        BG = [BG TFR.trial{cfg.fBOSC.trial_background(indTrial)}(:,cfg.fBOSC.pad.background_sample+1:end-cfg.fBOSC.pad.background_sample)];
-    end; clear indTrial
+    % Concatenate TFRs into a 3D array
+    disp('Calculating mean of all TFRs');
+    TFR_pad = [];
+    for tr = 1:length(TFR.trial)
+        TFR_pad{tr} = TFR.trial{tr}(:,cfg.fBOSC.pad.background_sample+1:end-cfg.fBOSC.pad.background_sample);
+    end
+    
+    BG = [TFR_pad{:}];
     
     % Get Freqs and  Power
     freqs = cfg.fBOSC.F;
@@ -48,7 +51,15 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     % calculated on logged version of the data.. which is then unlogged to
     % pass to fooof
     mean_pow = 10.^(mean(log10(BG(:,:)),2))';
-        
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % NOTE TO SELF: Is this the right order (log then mean)?
+    % BOSC and eBOSC both seem to do this, but then the threshold
+    % might not match with the original data?
+    %
+    % Potentially this is a bug?
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     % Run fooof
     % FOOOF settings
     if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')

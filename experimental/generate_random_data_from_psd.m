@@ -2,14 +2,10 @@
 start_fBOSC
 cd('/Users/rseymoue/Documents/GitHub/fBOSC/experimental');
 
-%% 
+%% Load the aperiodic data from python
+% aperiodic1 is the synaptic activity
+% aperiodic2 is the linear 1/f
 load('aperiodic1.mat');
-
-% alpha amplitudes
-amplitude = [0 2 4 6 8 12 16 24];
-
-% alpha cycles
-cycles = [2 4 8 16 32 64 128 200]; % total of 14 seconds
 
 %%
 cfg                         = [];
@@ -19,19 +15,25 @@ cfg.cycles                  = 64; % How many cycles?
 cfg.time                    = 20; % 20s of simulated data
 cfg.trial                   = 500; % How many 'trials'?
 [aperiodic_out_alpha, ...
-osc_alpha, data_alpha]      = sim_fBOSC(cfg,500,aperiodic1);
+    osc_alpha, ...
+    data_alpha, ...
+    alpha_osc_array]      = sim_fBOSC(cfg,500,aperiodic1);
 
 cfg                         = [];
-cfg.freq                    = 30; % Simulated a 10Hz oscillation
+cfg.freq                    = 4; % Simulated a 10Hz oscillation
 cfg.amplitude               = 24; % SNR of the simulated oscillation
-cfg.cycles                  = 192; % How many cycles?
+cfg.cycles                  = 26; % How many cycles?
 cfg.time                    = 20; % 20s of simulated data
 cfg.trial                   = 500; % How many 'trials'?
 [aperiodic_out_theta, ...
-osc_theta, data_theta]      = sim_fBOSC(cfg,500,aperiodic1);
+    osc_theta, ...
+    data_theta,...
+    theta_osc_array]        = sim_fBOSC(cfg,500,aperiodic1);
 
+% Plot the theta for sanity
+figure; subplot(2,1,1); plot(osc_alpha(1,:));
+subplot(2,1,2);plot(osc_theta(1,:));
 
-figure; plot(osc_theta(1,:));
 
 % Combine all trials into one array
 data_comb_osc       = zeros(cfg.trial,(2*cfg.time*500));
@@ -43,9 +45,10 @@ end
 data_comb_aperiodic = horzcat(aperiodic_out_alpha(:,:),...
     aperiodic_out_theta(:,:));
 
+%%
 % Set up BOSC parameters
 cfg                     = [];
-cfg.fBOSC.F             = 2.^[1:.125:5.25];    % frequency sampling
+cfg.fBOSC.F             = 2.^[1:.125:5.4];    % frequency sampling
 cfg.fBOSC.wavenumber	= 6;           % wavelet family parameter (time-frequency tradeoff)
 cfg.fBOSC.fsample       = 500;         % current sampling frequency of EEG data
 
@@ -78,17 +81,20 @@ for indTrial = 1:size(data_comb_osc,1)
         cfg.fBOSC.F,cfg.fBOSC.fsample,cfg.fBOSC.wavenumber);
 end; clear indTrial
 
+% Plot for sanity
+figure; imagesc(TFR.trial{1});
+
 % Get thresholds + fit line using FOOOF
-[fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, []);
+[fBOSC, pt_fBOSC, dt_fBOSC] = fBOSC_getThresholds(cfg, TFR, []);
 
-% Get thresholds using eBOSC with 3-12Hz excluded
+% Get thresholds using eBOSC
 cfg.eBOSC = cfg.fBOSC;
-cfg.eBOSC.F_fit = cfg.fBOSC.F(~(cfg.fBOSC.F >= 8 & cfg.fBOSC.F <= 12))
-% Remove beta freqs
-cfg.eBOSC.F_fit = cfg.eBOSC.F_fit(~(cfg.eBOSC.F_fit >= 25 & cfg.eBOSC.F_fit <= 35));
+% Remove freqs with oscillatory peaks
+cfg.eBOSC.F_fit = cfg.fBOSC.F(~(cfg.fBOSC.F >= 2 & cfg.fBOSC.F <= 6))
+cfg.eBOSC.F_fit = cfg.eBOSC.F_fit(~(cfg.eBOSC.F_fit >= 8 & cfg.eBOSC.F_fit <= 12));
+[eBOSC, pt_eBOSC, dt_eBOSC] = eBOSC_getThresholds_multipeak(cfg, TFR, []);
 
-[eBOSC, pt, dt] = eBOSC_getThresholds_multipeak(cfg, TFR, []);
-
+% Plor for sanity
 fBOSC.label = {'chan1'};
 cfg.log_freqs = 1;
 cfg.plot_old = 1;
@@ -108,18 +114,18 @@ for i = 1:500
     % First BOSC
     trial_aperiodic_mean = mean(log10(TFR_aperiodic.trial{i}(:,:)),2);
     fit_to_use = log10(fBOSC.static.mp_old)';
-    RMSE_trial = sqrt(mean((trial_aperiodic_mean-fit_to_use)).^2); % Root mean square error 
+    RMSE_trial = sqrt(mean((trial_aperiodic_mean-fit_to_use)).^2); % Root mean square error
     RMSE_all(i,1) = RMSE_trial;
     
     % Now eBOSC with frequencies excluded
     fit_to_use = log10(eBOSC.static.mp)';
-    RMSE_trial = sqrt(mean((fit_to_use-trial_aperiodic_mean)).^2); % Root mean square error 
-    RMSE_all(i,2) = RMSE_trial;    
+    RMSE_trial = sqrt(mean((fit_to_use-trial_aperiodic_mean)).^2); % Root mean square error
+    RMSE_all(i,2) = RMSE_trial;
     
     % Now FOOOF
     fit_to_use = log10(fBOSC.static.mp)';
-    RMSE_trial = sqrt(mean((fit_to_use-trial_aperiodic_mean)).^2); % Root mean square error 
-    RMSE_all(i,3) = RMSE_trial;    
+    RMSE_trial = sqrt(mean((fit_to_use-trial_aperiodic_mean)).^2); % Root mean square error
+    RMSE_all(i,3) = RMSE_trial;
 end
 
 figure;boxplot(RMSE_all,{'BOSC','eBOSC','fBOSC'});
@@ -135,7 +141,226 @@ t = table(RMSE,condition);
 writetable(t,'alpha_beta_knee.csv')
 
 
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Now let's apply these thresholds to single trials using both fBOSC 
+% and eBOSC approaches
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% For hit-rate vs false alarm rates we need to use multiple thresholds
+cfg.fBOSC.threshold.percentile  = horzcat([0.05:0.05:0.95],[0.91:0.01:0.99]);
+[fBOSC, pt_all, dt]             = fBOSC_getThresholds_multi_thresholds(cfg, TFR, []);
+[fBOSC, pt_all_eBOSC, dt]       = eBOSC_getThresholds_multi_thresholds(cfg, TFR, []);
+
+%% Get logical array for known times of alpha and theta oscillations
+
+alpha_osc_array;
+theta_osc_array = theta_osc_array + size(osc_alpha,2);
+
+osc_combined = [osc_alpha(1,:) osc_theta(1,:)]
+
+% Create logical array for theta
+theta_logical = zeros(1,size(osc_combined,2));
+theta_logical(theta_osc_array) = 1;
+figure; plot(osc_combined); hold on;
+plot(theta_logical);
+theta_logical = theta_logical(:,cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample)
+theta_logical = theta_logical(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+theta_logical = logical(theta_logical);
+
+% Create logical array for alpha
+alpha_logical = zeros(1,size(osc_combined,2));
+alpha_logical(alpha_osc_array) = 1;
+figure; plot(osc_combined); hold on;
+plot(alpha_logical);
+alpha_logical = alpha_logical(:,cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample)
+alpha_logical = alpha_logical(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+alpha_logical = logical(alpha_logical);
+
+%%
+hit_rate = zeros(2,length(TFR.trial),...
+    length(cfg.fBOSC.threshold.percentile));
+false_alarm = zeros(2,length(TFR.trial),...
+    length(cfg.fBOSC.threshold.percentile));
+
+% Start of trial loop
+
+for indTrial = 1:size(data_comb_osc,1)
+    % get wavelet transform for single trial
+    % tfr padding is removed to avoid edge artifacts from the wavelet
+    % transform. Note that a padding fpr detection remains attached so that there
+    % is no problems with too few sample points at the edges to
+    % fulfill the duration criterion.
+    TFR_ = TFR.trial{indTrial}(:,cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample);
+    disp(indTrial);
+    cfg.tmp.trial = indTrial; % encode current trial for later
+    cfg.tmp.channel = 1;
+    
+    for thresh = 1:length(cfg.fBOSC.threshold.percentile)
+        
+        %% fBOSC
+        detected = zeros(size(TFR_));
+        
+        for f = 1:length(cfg.fBOSC.F)
+            detected(f,:) = BOSC_detect(TFR_(f,:),pt_all(thresh,f),dt(f),...
+                cfg.fBOSC.fsample);
+        end; clear f
+        
+        % remove padding for detection (matrix with padding required for refinement)
+        detected = detected(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+        
+        %% fBOSC
+        detected_times = single(squeeze(nanmean(detected(...
+            cfg.fBOSC.F > 3.5 & cfg.fBOSC.F < 4.5,:),1))>0);
+        
+        % Calculate hit rate
+        hits = detected_times(theta_logical);
+        hit_rate(1,indTrial,thresh) = length(find(hits==1))/length(theta_osc_array);
+        
+        % Calculate false alarm rate
+        falses = detected_times(~theta_logical);
+        false_alarm(1,indTrial,thresh) = length(find(falses==1))/(length(detected_times)-length(theta_osc_array));
+        
+        clear hits falses detected_times detected
+        
+        %% eBOSC
+        detected = zeros(size(TFR_));
+        
+        for f = 1:length(cfg.fBOSC.F)
+            detected(f,:) = BOSC_detect(TFR_(f,:),pt_all_eBOSC(thresh,f),dt(f),...
+                cfg.fBOSC.fsample);
+        end; clear f
+        
+        % remove padding for detection (matrix with padding required for refinement)
+        detected = detected(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+        
+        detected_times = single(squeeze(nanmean(detected(...
+            cfg.fBOSC.F > 3.5 & cfg.fBOSC.F < 4.5,:),1))>0);
+        
+        % Calculate hit rate
+        hits = detected_times(theta_logical);
+        hit_rate(2,indTrial,thresh) = length(find(hits==1))/length(theta_osc_array);
+        
+        % Calculate false alarm rate
+        falses = detected_times(~theta_logical);
+        false_alarm(2,indTrial,thresh) = length(find(falses==1))/(length(detected_times)-length(theta_osc_array));
+        
+        clear hits falses detected_times detected
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % Here we are not applying any post-processing:
+        % Something to revisit? However it probably won't affect
+        % the comparison
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    end
+end
+
+figure; scatter(squeeze(mean(false_alarm(1,:,:),2)),...
+    squeeze(mean(hit_rate(1,:,:),2))); hold on
+
+scatter(squeeze(mean(false_alarm(2,:,:),2)),...
+    squeeze(mean(hit_rate(2,:,:),2)));
+
+ylabel('Hit Rate');
+xlabel('False Alarm Rate');
+
+%     %% Copy fBOSC to EBOSC for consistency
+%     cfg.eBOSC = cfg.fBOSC;
+%     cfg.eBOSC.channel = 1;
+%     
+%     %% Step 4 (optional): create table of separate rhythmic episodes
+%     
+%       cfg.tmp.inputTime = 0.002:0.002:40;
+%       cfg.tmp.detectedTime = cfg.tmp.inputTime(cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample);
+%       cfg.tmp.finalTime = cfg.tmp.inputTime(cfg.fBOSC.pad.total_sample+1:end-cfg.fBOSC.pad.total_sample);
+%     
+%     [fBOSC.episodes, detected_ep] = eBOSC_episode_create(cfg,TFR_,detected,fBOSC);
+%     
+%     % remove padding for detection (already done for eBOSC.episodes)
+%     fBOSC.detected_ep(1, indTrial,:,:) = detected_ep(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+%     clear detected_ep;
+    clear detected
+    
+%% Repeat for eBOSC
+    % The next section applies both the power and the duration
+    % threshold to detect individual rhythmic segments in the continuous signals.
+    detected = zeros(size(TFR_));
+    for f = 1:length(cfg.fBOSC.F)
+        detected(f,:) = BOSC_detect(TFR_(f,:),pt_eBOSC(f),dt_eBOSC(f),cfg.fBOSC.fsample);
+    end; clear f
+    
+    % remove padding for detection (matrix with padding required for refinement)
+    eBOSC.detected(1, indTrial,:,:) = detected(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+    
+    % encode pepisode of detected rhythms (optional)
+    eBOSC.pepisode(1, indTrial,:) = mean(eBOSC.detected(1, indTrial,:,:),4);
+
+end
+
+
+
+false_alarm = [];
+hit_rate    = [];
+
+% For theta
+for indTrial = 1:size(data_comb_osc,1)
+    % fBOSC
+    detected_times = single(squeeze(nanmean(fBOSC.detected(1, ...
+    indTrial,cfg.fBOSC.F > 3.5 & cfg.fBOSC.F < 4.5,:),3))>0);
+    
+    % Calculate hit rate
+    hits = detected_times(theta_logical);
+    hit_rate(indTrial,1) = length(find(hits==1))/length(theta_osc_array);
+    
+    falses = detected_times(~theta_logical);
+    
+    false_alarm(indTrial,1) = length(find(falses==1))/(length(detected_times)-length(theta_osc_array));
+    clear falses hits detected_times
+    
+    % eBOSC
+    detected_times = single(squeeze(nanmean(eBOSC.detected(1, ...
+    indTrial,cfg.fBOSC.F > 3.5 & cfg.fBOSC.F < 4.5,:),3))>0);
+    
+    % Calculate hit rate
+    hits = detected_times(theta_logical);
+    hit_rate(indTrial,2) = length(find(hits==1))/length(theta_osc_array);
+    
+    falses = detected_times(~theta_logical);
+    
+    false_alarm(indTrial,2) = length(find(falses==1))/(length(detected_times)-length(theta_osc_array));
+    clear falses hits detected_times
+    
+end
+    
+figure;boxplot(false_alarm,{'fBOSC','eBOSC'});
+
+
+
+
+
+
+
+
+
+
+
+
+%%
+h = figure('units','normalized','position',[.1 .1 .6 .3]);
+hold on;
+plot(origData_time,squeeze(origData), 'k');
+tmpDetected = single(squeeze(nanmean(fBOSC.detected_ep(1, ...
+    indTrial,cfg.fBOSC.F > 3.5 & cfg.fBOSC.F < 4.5,:),3))>0); ...
+    tmpDetected(tmpDetected==0) = NaN;
+plot(origData_time,squeeze(origData).*tmpDetected', 'r');
+xlim([0 40])
+xlabel('Time (s)'); ylabel('Power (a.u)');
+[~, hobj, ~, ~] = legend({'Original signal'; 'Rhythmic signal'}, ...
+    'orientation', 'horizontal', 'location', 'northoutside'); legend('boxoff')
+hl = findobj(hobj,'type','line');
+ht = findobj(hobj,'type','text')
+set(ht,'FontSize',20);
+set(hl,'LineWidth',3);
 
 
 
@@ -160,13 +385,13 @@ FT_SNR_total(a,c,k) = mean(B(k,19,AlphaPlace))./mean(BGonly_FT(k,19,:));
 
 
 figure; plot(signal);
-    
+
 data = [];
 data.trial{1} = signal;
 data.label = {'chan1'};
 data.time{1} = [0.002:0.002:20];
-    
-    
+
+
 %% fBOSC parameters
 
 % general setup
@@ -220,7 +445,7 @@ origData_time = data.time{indTrial}(...
 
 %%
 h = figure('units','normalized','position',[.1 .1 .6 .3]);
-hold on; 
+hold on;
 plot(origData_time,squeeze(origData), 'k');
 tmpDetected = single(squeeze(nanmean(fBOSC.detected(indChan, ...
     indTrial,cfg.fBOSC.F > 8 & cfg.fBOSC.F < 12,:),3))>0); ...
@@ -268,7 +493,7 @@ if ~isempty(episodes) % if episodes
         
         Hits = intersect(alpha_locs, alpha_sim_locs); % detected & simulated
         
-
-
-
-
+        
+        
+        
+        

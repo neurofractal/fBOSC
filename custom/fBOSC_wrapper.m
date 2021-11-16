@@ -87,10 +87,9 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
         end; clear indTrial
 
         %% Step 2: robust background power fit (see 2020 NeuroImage paper)
-
         [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC);
 
-        %% application of thresholds to single trials
+        %% Application of thresholds to single trials
 
         for indTrial = 1:numel(cfg.fBOSC.trial)
 
@@ -118,23 +117,23 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
             % encode pepisode of detected rhythms (optional)
             fBOSC.pepisode(indChan, indTrial,:) = mean(fBOSC.detected(indChan, indTrial,:,:),4);
             
-            %% Copy fBOSC to EBOSC for consistency
-            cfg.eBOSC = cfg.fBOSC;
-            
-            %% Step 4 (optional): create table of separate rhythmic episodes
-
-            cfg.tmp.inputTime = data.time{cfg.tmp.trial};
-            cfg.tmp.detectedTime = cfg.tmp.inputTime(cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample);
-            cfg.tmp.finalTime = cfg.tmp.inputTime(cfg.fBOSC.pad.total_sample+1:end-cfg.fBOSC.pad.total_sample);
-            
-            [fBOSC.episodes, detected_ep] = eBOSC_episode_create(cfg,TFR_,detected,fBOSC);
-            
-            % remove padding for detection (already done for eBOSC.episodes)
-            fBOSC.detected_ep(indChan, indTrial,:,:) = detected_ep(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
-            clear detected_ep;
-
-            % encode abundance of eBOSC.episodes (optional)
-            fBOSC.abundance_ep(indChan, indTrial,:) = mean(squeeze(fBOSC.detected_ep(indChan, indTrial,:,:)),2);
+%             %% Copy fBOSC to EBOSC for consistency
+%             cfg.eBOSC = cfg.fBOSC;
+%             
+%             %% Step 4 (optional): create table of separate rhythmic episodes
+% 
+%             cfg.tmp.inputTime = data.time{cfg.tmp.trial};
+%             cfg.tmp.detectedTime = cfg.tmp.inputTime(cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample);
+%             cfg.tmp.finalTime = cfg.tmp.inputTime(cfg.fBOSC.pad.total_sample+1:end-cfg.fBOSC.pad.total_sample);
+%             
+%             [fBOSC.episodes, detected_ep] = eBOSC_episode_create(cfg,TFR_,detected,fBOSC);
+%             
+%             % remove padding for detection (already done for fBOSC.episodes)
+%             fBOSC.detected_ep(indChan, indTrial,:,:) = detected_ep(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+%             clear detected_ep;
+% 
+%             % encode abundance of fBOSC.episodes (optional)
+%             fBOSC.abundance_ep(indChan, indTrial,:) = mean(squeeze(fBOSC.detected_ep(indChan, indTrial,:,:)),2);
 
 %           % Supplementary Plot: original eBOSC.detected vs. sparse episode power
 %           figure; 
