@@ -58,7 +58,7 @@ aperiodic_out   = zeros(cfg.trial,length(time));
 
 %% Start of trial loop
 for k = 1:cfg.trial
-    disp(k);
+    %disp(k);
     alphaCycles = cfg.cycles;
     alphaFreq = cfg.freq;
     

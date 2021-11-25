@@ -23,6 +23,7 @@ condition   = {'synaptic','linear'};
 
 for c = 1:length(condition)
     for s = 1:length(SNR)
+        disp(['Condition: ' condition{c} '; SNR: ' num2str(SNR(s))]);
         %% Load the aperiodic data from python
         % aperiodic3 is the synaptic activity
         % aperiodic4 is the linear 1/f
@@ -240,6 +241,7 @@ for c = 1:length(condition)
             
             % remove padding for detection (matrix with padding required for refinement)
             detected = detected(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+            
             %% THETA
             detected_times = single(squeeze(nanmean(detected(...
                 cfg.fBOSC.F > 3.5 & cfg.fBOSC.F < 4.5,:),1))>0);
@@ -312,7 +314,7 @@ for c = 1:length(condition)
     end
 end
 
-%%
+%% Plot Hit-Rate vs SNR
 h1= figure;
 set(h1,'Position',[10 10 2000 500])
 
@@ -336,9 +338,75 @@ end
 print('HR_SNR','-dpng','-r300');
 
 
+%% Plot False Alarm Rate vs SNR
+
+h1= figure;
+set(h1,'Position',[10 10 2000 500])
+
+cols = [0.0157    0.3608    1.0000;0.7843    0.3451    0.5569; 
+    1.0000    0.3608    0.0157];
+
+for i = 1:3
+    subplot(1,3,i);
+    plot(SNR,squeeze(mean(false_alarm_alpha(i,1,:,:))),'--s',...
+        'Color',cols(i,:),'LineWidth',2,...
+        'MarkerSize',10,'MarkerFaceColor',cols(i,:)); hold on;
+    plot(SNR,squeeze(mean(false_alarm(i,1,:,:))),'-o',...
+        'Color',cols(i,:),'LineWidth',2,...
+        'MarkerSize',10,'MarkerFaceColor',cols(i,:)); hold on;
+    set(gca,'FontSize',20);
+    xlabel('SNR','FontSize',24);
+    ylabel('False Alarm Rate','FontSize',24);
+    %xticks([0:4:24]);
+    %ylim([0 1]);
+end
+
+print('FA_SNR','-dpng','-r300');
+
+%% d'
+h1= figure;
+set(h1,'Position',[10 10 2000 500])
+
+cols = [0.0157    0.3608    1.0000;0.7843    0.3451    0.5569; 
+    1.0000    0.3608    0.0157];
+
+for i = 1:3
+    subplot(1,3,i);
+    
+    % Theta
+    FA = squeeze(mean(false_alarm(i,1,:,:)));
+    HR = squeeze(mean(hit_rate(i,1,:,:)));
+    
+    d_prime = (norminv(HR)*-1)-(norminv(FA)*-1);
+    
+    % Alpha
+    FA_alpha = squeeze(mean(false_alarm_alpha(i,1,:,:)));
+    HR_alpha = squeeze(mean(hit_rate_alpha(i,1,:,:)));
+    
+    d_prime_alpha = (norminv(HR_alpha)*-1)-(norminv(FA_alpha)*-1);
+    
+    
+    plot(SNR,d_prime,'--s',...
+        'Color',cols(i,:),'LineWidth',2,...
+        'MarkerSize',10,'MarkerFaceColor',cols(i,:)); hold on;
+    plot(SNR,d_prime_alpha,'-o',...
+        'Color',cols(i,:),'LineWidth',2,...
+        'MarkerSize',10,'MarkerFaceColor',cols(i,:)); hold on;
+    set(gca,'FontSize',20);
+    xlabel('SNR','FontSize',24);
+    ylabel('d prime','FontSize',24);
+    %xticks([0:4:24]);
+    %ylim([0 1]);
+end
 
 
-subplot(1,3,2);
+
+
+
+
+% Calculate d'
+
+figure;
 plot(SNR,squeeze(mean(false_alarm_alpha(2,1,:,:))),'--s',...
     'Color',[0.7843    0.3451    0.5569],'LineWidth',2); hold on;
 plot(SNR,squeeze(mean(false_alarm(2,1,:,:))),'-o',...
