@@ -47,10 +47,10 @@ function [eBOSC, pt, dt] = eBOSC_getThresholds_multipeak(cfg, TFR, eBOSC)
     % following section removes these specified ranges
     freqKeep = ismember(cfg.eBOSC.F,cfg.eBOSC.F_fit);
     
-    if length(cfg.eBOSC.F(freqKeep)) ~= length(cfg.eBOSC.F)
-        disp(['Only using ' num2str(length(cfg.eBOSC.F(freqKeep))) ' out of ' ...
-            num2str(length(cfg.eBOSC.F)) ' frequencies for line fitting']);
-    end
+%     if length(cfg.eBOSC.F(freqKeep)) ~= length(cfg.eBOSC.F)
+%         disp(['Only using ' num2str(length(cfg.eBOSC.F(freqKeep))) ' out of ' ...
+%             num2str(length(cfg.eBOSC.F)) ' frequencies for line fitting']);
+%     end
     
     fitInput.f_ = cfg.eBOSC.F(freqKeep);
     fitInput.BG_ = BG(freqKeep, :);

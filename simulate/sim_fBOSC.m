@@ -13,7 +13,7 @@ function [aperiodic_out, osc_out, combined,AlphaPlace] = sim_fBOSC(cfg,Fs,aperio
 %
 % % EXAMPLE USEAGE:   [aperiodic_out, osc_out, combined] = sim_fBOSC(cfg,Fs,aperiodic)
 %__________________________________________________________________________
-% Copyright (C) 2021 Wellcome Trust Centre for Neuroimaging
+% Copyright (C) 2021-22 Wellcome Trust Centre for Neuroimaging
 %
 % Author: Robert Seymour      (rob.seymour@ucl.ac.uk);
 %
@@ -77,7 +77,7 @@ for k = 1:cfg.trial
 %%    % filter entire signal    
 try
     [tmp_bpsignal] = ft_preproc_bandpassfilter(aperiodic(k,:), 500,...
-        [cfg.freq-2 cfg.freq+2], 5);
+        [cfg.freq-1 cfg.freq+1], 3);
 catch
     [tmp_bpsignal] = ft_preproc_bandpassfilter(aperiodic(k,:), 500,...
         [cfg.freq-1 cfg.freq+1], 4);
@@ -104,7 +104,6 @@ end
     clear osc VarBG targetPower alpha_sim amplitudeFromRMS
 
 end
-
 
 
 

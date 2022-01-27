@@ -21,6 +21,36 @@ cd(data_path);
 load('VE.mat');
 VE.fsample = 600;
 
+%% Try fooof in Fieldtrip
+cfg               = [];
+cfg.channel       = VE.label{30};
+cfg.foilim        = [1 40];
+cfg.pad           = 10;
+cfg.tapsmofrq     = 2;
+cfg.fooof.aperiodic_mode = 'knee';
+cfg.method        = 'mtmfft';
+cfg.output        = 'fooof_aperiodic';
+fractal = ft_freqanalysis(cfg, VE);
+cfg.output        = 'pow';
+original = ft_freqanalysis(cfg, VE);
+
+% subtract the fractal component from the power spectrum
+cfg               = [];
+cfg.parameter     = 'powspctrm';
+cfg.operation     = 'log10(x2)-log10(x1)';
+oscillatory = ft_math(cfg, fractal, original);
+
+% display the spectra on a log-log scale
+figure();
+hold on;
+plot(log10(original.freq), log10(original.powspctrm),'k');
+plot(log10(fractal.freq), log10(fractal.powspctrm));
+figure;
+plot(log10(fractal.freq), oscillatory.powspctrm);
+xlabel('log-freq'); ylabel('log-power');
+legend({'original','fractal','oscillatory'},'location','southwest');
+
+
 %% Load fBOSC
 cd('/Users/rseymoue/Documents/GitHub/fBOSC');
 start_fBOSC;

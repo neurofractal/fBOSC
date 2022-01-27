@@ -79,9 +79,9 @@ for lab = 1:length(fBOSC.label)
     grid on
     legend('Original Spectrum', 'Full Model Fit', 'Aperiodic Fit')
     
-    set(gca,'Fontsize',14)
-    xlabel('Frequency (log10 Hz)','FontSize',20);
-    ylabel('Power (log 10 a.u.)','FontSize',20);
+    set(gca,'Fontsize',20)
+    xlabel('log10(Frequency) (Hz)','FontSize',30);
+    ylabel('log10(Power) (a.u.)','FontSize',30);
     if cfg.plot_old
         legend({'Original Spectrum', ...
             'Aperiodic Fit','BOSC Threshold'}, ...

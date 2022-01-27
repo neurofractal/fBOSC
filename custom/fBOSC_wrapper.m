@@ -27,7 +27,7 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
 %                | .label field: {channelName}
 %
 % Outputs: 
-%           fBOSC | main eBOSC output structure
+%           fBOSC | main fBOSC output structure
 %               fBOSC.episodes | table of individual rhythmic episodes (see eBOSC_episode_create)
 %               fBOSC.detected | binary matrix of detected time-frequency points (prior to episode creation)
 %               fBOSC.pepisode | temporal average of detected rhythms (prior to episode creation)
@@ -85,8 +85,8 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
                 (cfg.fBOSC.channel(indChan),:),cfg.fBOSC.F,...
                 cfg.fBOSC.fsample,cfg.fBOSC.wavenumber);
         end; clear indTrial
-
-        %% Step 2: robust background power fit (see 2020 NeuroImage paper)
+           
+        %% Step 2: robust background power fit
         [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC);
 
         %% Application of thresholds to single trials

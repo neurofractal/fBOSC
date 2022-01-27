@@ -5,9 +5,7 @@ p = mfilename('fullpath');
 folder_path = fileparts(p);
 
 % Add relevent folders
-addpath(genpath(fullfile(folder_path,'custom')));
-addpath(genpath(fullfile(folder_path,'eBOSC')));
-addpath(genpath(fullfile(folder_path,'fooof_mat')));
+addpath(genpath(fullfile(folder_path)));
 
 try
     py.importlib.import_module('fooof');

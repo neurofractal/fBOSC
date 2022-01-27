@@ -9,7 +9,7 @@ load('aperiodic3.mat');
 % Settings
 ntrials                     = 10;  % Number of trials 
 Fs                          = 250; % Sampling Rate
-SNR                         = 50;   % SNR of oscillation
+SNR                         = 10;   % SNR of oscillation
 len_of_trial                = 2;   % Length of each trial in s
 
 % Trim aperiodic data down to size of ntrials*len_of_trial
@@ -36,7 +36,7 @@ subplot(3,1,3);plot(data_alpha.time{1},data_alpha.trial{1});
 %% fBOSC parameters
 
 % general setup
-cfg.fBOSC.F             = [3:1:30];    % frequency sampling
+cfg.fBOSC.F             = [3:1:80];    % frequency sampling
 cfg.fBOSC.wavenumber	= 6;           % wavelet family parameter (time-frequency tradeoff)
 cfg.fBOSC.fsample       = 250;         % current sampling frequency of EEG data
 

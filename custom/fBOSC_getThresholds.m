@@ -47,10 +47,12 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     
     % Get Freqs and  Power
     freqs = cfg.fBOSC.F;
-    % For consistency with the rest of the eBOSC toolbox, the mean is
+    % For consistency with the rest of the toolbox, the mean is
     % calculated on logged version of the data.. which is then unlogged to
     % pass to fooof
     mean_pow = 10.^(mean(log10(BG(:,:)),2))';
+    
+    %figure; plot(log10(freqs),log10(mean_pow));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % NOTE TO SELF: Is this the right order (log then mean)?
@@ -60,25 +62,101 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     % Potentially this is a bug?
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % Run fooof
+    %%  Run FOOOF Using MATLAB wrapper for Python
     % FOOOF settings
     if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
         settings = struct();
         setting.verbose = 0; % Use defaults
     else
-        settings = cfg.fBOSC.fooof;  
+        settings = cfg.fBOSC.fooof;
     end
-    f_range = [freqs(1), freqs(end)];
+    f_range = freqs([1 end]);
 
-    % Run FOOOF
     tic;
     fooof_results = fooof(freqs, mean_pow, f_range, settings,true);
     elapsed = toc;
     %fprintf('TIC TOC: %g\n', elapsed);
+%     
+%     figure;
+%     plot(log10(freqs),log10(mean_pow)); hold on;
+%     plot(log10(freqs), fooof_results.ap_fit, 'red');
+%     
+%     %% Run FOOOF using MATLAB Fieldtrip/Brainstorm Code
+%     % check for brainstorm functions on the path, and add if needed
+%     ft_hastoolbox('brainstorm', 1);
+%     
+%     opts_bst  = getfield(process_fooof('GetDescription'), 'options');
+%     
+%     % Fetch user settings, this is a chunk of code copied over from
+%     % process_fooof, to bypass the whole database etc handling.
+%     cfg.fooof.aperiodic_mode = 'knee';
+%     opt                     = ft_getopt(cfg, 'fooof', []);
+%     opt.freq_range          = ft_getopt(opt, 'freq_range', freqs([1 end]));
+%     opt.peak_width_limits   = ft_getopt(opt, 'peak_width_limits', opts_bst.peakwidth.Value{1});
+%     opt.max_peaks           = ft_getopt(opt, 'max_peaks',         2);
+%     opt.min_peak_height     = ft_getopt(opt, 'min_peak_height',   0); % convert from dB to B
+%     opt.peak_threshold      = ft_getopt(opt, 'peak_threshold',    3);   % 2 std dev: parameter for interface simplification
+%     opt.return_spectrum     = ft_getopt(opt, 'return_spectrum',   1);   % SPM/FT: set to 1
+%     opt.apermode.Value   = 'knee';
+%     %     opt.border_threshold    = ft_getopt(opt, 'border_threshold',  1);   % 1 std dev: proximity to edge of spectrum, static in Python 
+% %     % Matlab-only options
+%     opt.power_line          = ft_getopt(opt, 'power_line',        'inf'); % for some reason it should be a string, if you don't want a notch, use 'inf'. Brainstorm's default is '60'
+%      opt.peak_type           = ft_getopt(opt, 'peak_type',         opts_bst.peaktype.Value);
+%      opt.proximity_threshold = ft_getopt(opt, 'proximity_threshold', 1);
+%      opt.guess_weight        = ft_getopt(opt, 'guess_weight',      opts_bst.guessweight.Value);
+%      opt.thresh_after        = ft_getopt(opt, 'thresh_after',      true);   % Threshold after fitting always selected for Matlab (mirrors the Python FOOOF closest by removing peaks that do not satisfy a user's predetermined conditions)
+%     
+% %     % Output options
+% %     opt.sort_type  = opts_bst.sorttype.Value;
+% %     opt.sort_param = opts_bst.sortparam.Value;
+% %     opt.sort_bands = opts_bst.sortbands.Value;
+%     
+%     hasOptimTools = 0;
+% %     if exist('fmincon', 'file')
+% %       hasOptimTools = 1;
+% %       disp('Using constrained optimization, Guess Weight ignored.');
+% %     end
+%     
+%     mean_pow2 = reshape(mean_pow,[1 1 38]);
+%     
+%     [fs, fg] = process_fooof('FOOOF_matlab',mean_pow2, freqs, opt, hasOptimTools);
+%       
+%     figure;
+%     plot(log10(freqs),log10(mean_pow),'k','LineWidth',2); hold on;
+%     plot(log10(freqs), log10(fg.ap_fit), 'red','LineWidth',2);
+%     plot(log10(freqs), fooof_results.ap_fit, 'blue','LineWidth',2);
+%     legend({'','MATLAB','Python'});
+% 
+%     % Plot the full model fit
+%     figure;
+%     plot(log10(freqs),mean_pow); hold on;
+%     plot(log10(freqs), fg.ap_fit, 'b--');
+%     
+%      % Plot the full model fit
+%     figure;
+%     plot(log10(freqs),log10(mean_pow)); hold on;
+%     %plot(log10(freqs), fooof_results.ap_fit, 'b--');   
+%     plot(log10(freqs), log10(fg.ap_fit), 'g--');
+% 
+%     % Plot the full model fit
+%     figure;
+%     plot(fs, fg.fooofed_spectrum, 'red');
+%     plot(fs, fg.ap_fit, 'b--');
+% % Plot the full model fit
+%     figure;
+%     plot(fs, fg.fooofed_spectrum, 'red');
+%     plot(fs, fg.ap_fit, 'b--');
+%       
+%     cfg.log_freqs = 1;
+%     cfg.plot_old = 0;
+%     fBOSC_fooof_plot(cfg,fBOSC)
     
+    
+      
+    %% Process Results
     mp = 10.^fooof_results.ap_fit;
     
-    % perform the robust linear fit, only including putatively aperiodic components (i.e., peak exclusion)
+    % perform the linear fit, only including putatively aperiodic components (i.e., peak exclusion)
     b = robustfit(log10(freqs),mean(log10(BG(:,:)),2)'); clear fitInput;
     pv(1) = b(2); pv(2) = b(1);
     
