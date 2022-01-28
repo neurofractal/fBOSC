@@ -25,8 +25,6 @@ FOOOF is a fast, efficient, and physiologically-informed tool to parameterize ne
 - An aperiodic component, reflecting 1/f like characteristics, with
 - A variable number of periodic components (putative oscillations), as peaks rising above the aperiodic component
 
-![](./media/fooof_example.png)
-
 ## So why use FOOOF in combination with BOSC?
 
 In short, it provides more robust and flexible way of parametising the aperiodic 1/f component of neural data.
