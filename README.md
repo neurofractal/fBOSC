@@ -16,16 +16,12 @@ The duration threshold is usually set at 2-3 oscillatory cycles.
 
 In the time domain, if both power and duration thresholds are passed an oscillation is said to be "detected".
 
-### 2. FOOOF
-FOOOF is a fast, efficient, and physiologically-informed tool to parameterize neural power spectra.
+### 2. FOOOF (Donoghue et al., 2020)
 
-FOOOF conceives of a model of the power spectrum as a combination of two distinct functional processes:
+FOOOF is a fast, efficient, and physiologically-informed tool to parameterize neural power spectra. FOOOF conceives of a model of the power spectrum as a combination of two distinct functional processes:
 
 - An aperiodic component, reflecting 1/f like characteristics, with
-
 - A variable number of periodic components (putative oscillations), as peaks rising above the aperiodic component
-
-*(Text copied from the FOOOF documentation)*
 
 ![](./media/fooof_example.png)
 
@@ -35,13 +31,13 @@ In short, it provides more robust and flexible way of parametising the aperiodic
 
 As noted by Kosciessa et al., (2020), the standard BOSC analysis applies "a linear fit in log-log space to define the background power, which may overestimate the background at the frequencies of interest in the case of data with large rhythmic peaks." 
 
-The extended BOSC (eBOSC) toolbox allows the user to define peaks in the power spectrum, and these frequencies will not be used during the linear fit in log-log space.
+The extended BOSC (eBOSC) toolbox uses MATLAB's robustfit function and allows the user to define peaks in the power spectrum, and these frequencies will not be used during the linear fit in log-log space.
 
 **However two problems remain:**
 
 **1. Where multiple peaks exist in the power spectrum, the exclusion of many frequencies will lead to poor linear fits**
 
-**2. Both standard BOSC and eBOSC assume a single 1/f like characteristic to the aperiodic component, meaning it looks linear across all frequencies in log-log space. This is often not the case for neural data, especially across larger frequency ranges and MEG data. A linear fit in log-log space, is therefore not always suitable for electrophysiological data. See the [fooof documentation](https://fooof-tools.github.io/fooof/auto_tutorials/plot_05-AperiodicFitting.html) for more information.**
+**2. Both BOSC and eBOSC assume a single 1/f like characteristic to the aperiodic component, meaning it looks linear across all frequencies in log-log space. This is often not the case for neural data, especially across larger frequency ranges and MEG data. A linear fit in log-log space, is therefore not always suitable for electrophysiological data. See the [fooof documentation](https://fooof-tools.github.io/fooof/auto_tutorials/plot_05-AperiodicFitting.html) for more information.**
 
 ![](./media/example_no_fooof.png)
 
@@ -71,13 +67,17 @@ The RMSE is consistently lower for fBOSC compared with the other two methods in 
 
 ## What are the consequences of a poor 1/f fit?
 
-In the worst circumstances, at a particular fBOSC threshold (e.g. 0.95) your sensitivity for detecting oscillations will vary between different frequency bands.
+In the worst circumstances, at a particular fixed threshold used in the chi-squared function (e.g. 0.99) your sensitivity for detecting oscillations will vary between different frequency bands.
 
 **THIS IS NOT IDEAL.** 
 
-In our non-linear 1/f + alpha + theta oscillation simulations, we can get drastically different sensitivities for detecting theta and alpha oscillations for both BOSC and eBOSC. This effect is especially pronunced at lower SNRs. However fBOSC has very similar hit-rates between theta and alpha at all SNRs.
+In our non-linear 1/f simulations, we can get drastically different hit-rates for theta and alpha oscillations when using both BOSC and eBOSC. However fBOSC has very similar hit-rates between theta and alpha *at a given fixed threshold*.
 
-![](./media/fBOSC_per_freq.png)
+![](./media/HR_avg.png)
+
+This is the same for false alarm rate:
+
+![](./media/FA_avg.png)
 
 ## So how do I use fBOSC?
 
@@ -92,6 +92,8 @@ The [FOOOF documentation](https://fooof-tools.github.io/fooof/index.html#install
 Getting MATLAB and python to talk properly is tricker. Please refer to this [blog-post](https://irenevigueguix.wordpress.com/2020/03/25/loading-python-into-matlab/) if you are having issues. 
 
 *N.B. On my mac I had to rename /Applications/MATLAB_R2016b.app/sys/os/maci64/libgfortran.3.dylib to libgfortran.3.dylib.old to let Matlab search for the gcc gfortran*
+
+#### COMING SOON: A MATLAB implementation of FOOOF will be used instead of the Python one for ease of use
 
 #### 3. Start up fBOSC + run start_fBOSC
 
@@ -113,7 +115,7 @@ As you can see both the eBOSC and fooof_mat folders are present, along with the 
 If you use this code please cite the following:
 
 ```
-Donoghue, T., Haller, M., Peterson, E. J., Varma, P., Sebastian, P., Gao, R., ... & Voytek, B. (2020). Parameterizing neural power spectra into periodic and aperiodic components. Nature neuroscience, 23(12), 1655-1665.
+Donoghue, T., Haller, M., Peterson, E. J., Varma, P., Sebastian, P., Gao, R., ... & Voytek, B. (2020). Parameterizing neural power spectra into periodic and aperiodic components. Nature Neuroscience, 23(12), 1655-1665.
 ```
 
 ```
