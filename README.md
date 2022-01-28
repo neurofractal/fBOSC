@@ -73,11 +73,11 @@ In the worst circumstances, at a particular fixed threshold used in the chi-squa
 
 In our non-linear 1/f simulations, we can get drastically different hit-rates for theta and alpha oscillations when using both BOSC and eBOSC. However fBOSC has very similar hit-rates between theta and alpha *at a given fixed threshold*.
 
-![](./media/HR_avg.png)
+![](./validation/HR_avg.png)
 
 This is the same for false alarm rate:
 
-![](./media/FA_avg.png)
+![](./validation/FA_avg.png)
 
 ## So how do I use fBOSC?
 
