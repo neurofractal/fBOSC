@@ -3,6 +3,8 @@
 
 tl;dr: This repository contains MATLAB code for combining BOSC and FOOOF
 
+Tutorial script **[HERE](./validation/test_fBOSC.ipynb)**
+
 ### 1. BOSC
 The Better oscillation detection (BOSC) method has been widely used to characterise oscillatory activity in continuous data and/or at the single trial level. In brief, the method first computes a "power threshold" and a "duration threshold (DT)" for transient oscillatory burst detection. 
 
@@ -106,9 +108,12 @@ start_fBOSC
 
 As you can see both the eBOSC and fooof_mat folders are present, along with the fBOSC scripts in the 'custom' folder. 
 
-#### 4. Try out the test script for examples (WORK IN PROGRESS)
+#### 4. Try out the test scripts
 
-**[LINK](./custom/test_fBOSC.m)**
+**[RAW MATLAB SCRIPT](./custom/test_fBOSC.m)**
+
+**[FANCY iPython NOTEBOOK](./validation/test_fBOSC.ipynb)**
+
 
 ## Citations:
 

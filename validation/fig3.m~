@@ -32,7 +32,7 @@ for n = 1:ntrials
 end
 
 % For each condition
-for s = 1:2
+for s = 1:length(SNR)
         
     %% Simulate Data
     % Theta
@@ -77,8 +77,8 @@ for s = 1:2
     %% fBOSC
     % Set up BOSC parameters
     cfg                     = [];
-    %cfg.fBOSC.F             = 2.^[1:.125:6];    % frequency sampling
-    cfg.fBOSC.F             = [2:1:50];
+    cfg.fBOSC.F             = 2.^[1:.125:5.8];    % frequency sampling
+    %.fBOSC.F             = [2:1:50];
     cfg.fBOSC.wavenumber	= 6;           % wavelet family parameter (time-frequency tradeoff)
     cfg.fBOSC.fsample       = Fs;         % current sampling frequency of EEG data
     
@@ -128,7 +128,7 @@ for s = 1:2
     cfg.eBOSC = cfg.fBOSC;
     % Remove freqs with oscillatory peaks
     cfg.eBOSC.F_fit = cfg.fBOSC.F(~(cfg.fBOSC.F >= 2 & cfg.fBOSC.F <= 6));
-    cfg.eBOSC.F_fit = cfg.eBOSC.F_fit(~(cfg.eBOSC.F_fit >= 8 & cfg.eBOSC.F_fit <= 12));
+    cfg.eBOSC.F_fit = cfg.eBOSC.F_fit(~(cfg.eBOSC.F_fit >= 7 & cfg.eBOSC.F_fit <= 13));
     [eBOSC, pt_eBOSC, dt_eBOSC] = eBOSC_getThresholds_multipeak(cfg, TFR, []);
     
      %% Compute wavelet transform for just the aperiodic data
@@ -144,7 +144,7 @@ for s = 1:2
     %%
     % Plot the difference between the 1/f fits
     figure;
-    plot(log10(cfg.fBOSC.F),log10(fBOSC.static.mp_old),'--','Color',...
+    p1 = plot(log10(cfg.fBOSC.F),log10(fBOSC.static.mp_old),'--','Color',...
         [1.0000    0.3608    0.0157],'LineWidth',3); hold on;
     p1.Color(4) = 1;
     p2 = plot(log10(cfg.fBOSC.F),log10(eBOSC.static.mp),'--','Color',...
@@ -159,7 +159,7 @@ for s = 1:2
     set(gca,'FontSize',18);
     ylabel('Log Power (a.u.)','FontSize',22);
     xlabel('Log Frequency (Hz)','FontSize',22);
-    xlim([0.2 1.8]);
+    xlim([0.2 2]);
     ylim([2 4.5]);
     title(['SNR: ' num2str(SNR(s))]);
     drawnow;
@@ -202,19 +202,21 @@ plot(SNR,mean_error(1,:),'-s','Color',...
     hold on;
 plot(SNR,mean_error(2,:),'-s','Color',...
     [0.7843    0.3451    0.5569],'LineWidth',3, ...
-    'MarkerSize',10,'MarkerFaceColor',); hold on;
+    'MarkerSize',10,'MarkerFaceColor',[0.7843    0.3451    0.5569]); 
+    hold on;
 plot(SNR,mean_error(3,:),'-s','Color',...
     [0.0157    0.3608    1.0000],'LineWidth',3, ...
-    'MarkerSize',10); hold on;
+    'MarkerSize',10,'MarkerFaceColor',[0.0157    0.3608    1.0000]);
+hold on;
 set(gca,'FontSize',20);
 ylabel('RMSE','FontSize',30);
 xlabel('SNR','FontSize',30);
 %legend({'BOSC','eBOSC','fBOSC'},'Location','NorthWest');
 drawnow;
-%ylim([0 0.2]);
+%ylim([0 0.12]);
 print('RMSE_SNR','-dpng','-r400');
 
-%%
+
 %% Make an animated gif
 h = figure;
 axis tight manual % this ensures that getframe() returns a consistent size

@@ -1,5 +1,5 @@
 %%
-% An example analysis pipeline using fBOSC, and simulated data
+% An example analysis pipeline using fBOSC, using simulated data
 %__________________________________________________________________________
 % Copyright (C) 2022 Wellcome Trust Centre for Neuroimaging
 
@@ -98,8 +98,7 @@ set(gcf,'Position',[100 100 1200 600]);
 
 for indTrial = 1:10
     
-    % This is the crucial bit of code that gets the detected time(s) of
-    % oscillatory bursts from each trial
+    % This is the crcu
     tmpDetected = single(squeeze(nanmean(fBOSC.detected(1, ...
         indTrial,cfg.fBOSC.F > 8 & cfg.fBOSC.F < 13,:),3))>0); ...
         tmpDetected(tmpDetected==0) = NaN;
@@ -124,9 +123,7 @@ for indTrial = 1:10
 end
 
 
-%% Let's plot the same thing but using TFRs
-
-% Compute TFRs
+%% Let's plot the same thing but in TFR space
 TFR = [];
 for indTrial = 1:length(data_alpha.trial)
     TFR.trial{indTrial} = BOSC_tf(data_alpha.trial{indTrial},...
@@ -134,7 +131,7 @@ for indTrial = 1:length(data_alpha.trial)
 end; clear indTrial
 
 
-% Plot the figure
+
 figure;
 set(gcf,'Position',[100 100 1200 900]);
 
@@ -142,10 +139,9 @@ for indTrial = 1:10
     subplot(10,1,indTrial)
     TFR_ = TFR.trial{indTrial}(:,101:9900); % Account for padding
     
-    % This is the crucial bit of code 
     tmpDetected = logical(squeeze(fBOSC.detected(1,indTrial,:,:)));
 
-    % Plot
+   
     imagesc('YData',log10(cfg.fBOSC.F),'XData',data_alpha.time{1},'CData',...
         TFR_,'AlphaData', tmpDetected); hold on;
     imagesc('YData',log10(cfg.fBOSC.F),'XData',data_alpha.time{1},'CData',...
