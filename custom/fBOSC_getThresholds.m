@@ -1,28 +1,25 @@
-%    This file is part of the extended Better OSCillation detection (eBOSC) library.
+%%
+% fBOSC_getThresholds - Calculate 1/f fit using FOOOF and then 
+%                       get the thresholds for oscillation detection
+%__________________________________________________________________________
+% Copyright (C) 2022 Wellcome Trust Centre for Neuroimaging
+
+% Authors:  Robert Seymour      (rob.seymour@ucl.ac.uk) 
+%__________________________________________________________________________
+%    
+%    This file is part of the fBOSC library.
+%    License: The GNU General Public License v3.0
 %
-%    The eBOSC library is free software: you can redistribute it and/or modify
-%    it under the terms of the GNU General Public License as published by
-%    the Free Software Foundation, either version 3 of the License, or
-%    (at your option) any later version.
-%
-%    The eBOSC library is distributed in the hope that it will be useful,
-%    but WITHOUT ANY WARRANTY; without even the implied warranty of
-%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%    GNU General Public License for more details.
-%
-%    You should have received a copy of the GNU General Public License
-%    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
-%
-%    Copyright 2020 Julian Q. Kosciessa, Thomas H. Grandy, Douglas D. Garrett & Markus Werkle-Bergner
+%    Built on work by Kosciessa and colleagues
+%    https://github.com/jkosciessa/eBOSC
+%__________________________________________________________________________
+
 
 function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
-% This function estimates the static duration and power thresholds and
-% saves information regarding the overall spectrum and background.
-%
 % Inputs: 
-%           cfg | config structure with cfg.eBOSC field
+%           cfg | config structure with cfg.fBOSC field
 %           TFR | time-frequency matrix
-%           eBOSC | main eBOSC output structure; will be updated
+%           fBOSC | main eBOSC output structure; will be updated
 %
 % Outputs: 
 %           fBOSC   | updated w.r.t. background info (see below)
@@ -37,7 +34,7 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     
 
     % Concatenate TFRs into a 3D array
-    disp('Calculating mean of all TFRs');
+    % disp('Calculating mean of all TFRs');
     TFR_pad = [];
     for tr = 1:length(TFR.trial)
         TFR_pad{tr} = TFR.trial{tr}(:,cfg.fBOSC.pad.background_sample+1:end-cfg.fBOSC.pad.background_sample);
@@ -61,110 +58,148 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     %
     % Potentially this is a bug?
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    %%  Run FOOOF Using MATLAB wrapper for Python
-    % FOOOF settings
-    if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
-        settings = struct();
-        setting.verbose = 0; % Use defaults
-    else
-        settings = cfg.fBOSC.fooof;
+    
+    switch cfg.fBOSC.fooof.version
+        %% Run FOOOF Using MATLAB wrapper for Python
+        case 'python'
+            % FOOOF settings
+            if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
+                settings = struct();
+                setting.verbose = 0; % Use defaults
+            else
+                settings = cfg.fBOSC.fooof;
+            end
+            f_range = freqs([1 end]);
+            
+            fooof_results = fooof(freqs, mean_pow, f_range, settings,true);
+            
+        case 'matlab'
+            %% Run FOOOF using MATLAB Code
+            
+            % NOTE: This will only work well for situations in which
+            % frequency resolution is constant (i.e. 1,2,3,4...Hz). Future
+            % work will be needed to improve this. For now warn the user
+            diff_freq = diff(freqs);
+            if ~all(diff_freq == diff_freq(1))
+                warning(['The frequency resolution of cfg.fBOSC.F is ',...
+                    'not constant. Results could be weird. Proceed with caution']);
+            end
+            
+            % specparam opts
+            opt                     = [];
+            opt.freq_range          = freqs([1 end]);
+            opt.peak_width_limits   = [2 6];
+            opt.max_peaks           = 3;
+            opt.min_peak_height     = 0.1; 
+            opt.aperiodic_mode      = cfg.fBOSC.fooof.aperiodic_mode;
+            opt.peak_threshold      = 2.0;   % 2 std dev: parameter for interface simplification
+            % Matlab-only options
+            opt.peak_type           = 'gaussian'; % alternative: cauchy
+            opt.proximity_threshold = 2;
+            opt.guess_weight        = 'none';
+            opt.thresh_after        = true;
+            if license('test','optimization_toolbox') % check for optimization toolbox
+                opt.hOT = 1;
+                disp('Using constrained optimization, Guess Weight ignored.')
+            else
+                opt.hOT = 0;
+                disp('Using unconstrained optimization, with Guess Weights.')
+            end
+            opt.rmoutliers          = 'yes';
+            opt.maxfreq             = 2.5;
+            opt.maxtime             = 6;
+            opt.minnear             = 3;
+            
+            % log10 the power
+            spec = log10(mean_pow);
+            
+            %figure; plot(log10(freqs),spec); hold on;
+            
+            % Fit aperiodic using robust_ap_fit
+            aperiodic_pars = robust_ap_fit(freqs, spec, opt.aperiodic_mode);
+            
+%             figure;
+%             ap_fit1 = gen_aperiodic(freqs, aperiodic_pars, opt.aperiodic_mode);
+%             plot(log10(freqs),spec); hold on;
+%             plot(log10(freqs),ap_fit1); hold on;
+            
+            % Remove aperiodic component
+            flat_spec = flatten_spectrum(freqs, spec, aperiodic_pars, opt.aperiodic_mode);
+            
+%             figure;
+%             plot(log10(freqs), flat_spec, '-ro');
+            
+            % Fit peaks
+            [peak_pars, peak_function] = fit_peaks(freqs, flat_spec, opt.max_peaks, opt.peak_threshold, opt.min_peak_height, ...
+                opt.peak_width_limits/2, opt.proximity_threshold, opt.peak_type, opt.guess_weight,opt.hOT);
+            
+            if opt.thresh_after && ~opt.hOT  % Check thresholding requirements are met for unbounded optimization
+                peak_pars(peak_pars(:,2) < opt.min_peak_height,:)     = []; % remove peaks shorter than limit
+                peak_pars(peak_pars(:,3) < opt.peak_width_limits(1)/2,:)  = []; % remove peaks narrower than limit
+                peak_pars(peak_pars(:,3) > opt.peak_width_limits(2)/2,:)  = []; % remove peaks broader than limit
+                peak_pars = drop_peak_cf(peak_pars, opt.proximity_threshold, opt.freq_range); % remove peaks outside frequency limits
+                peak_pars(peak_pars(:,1) < 0,:) = []; % remove peaks with a centre frequency less than zero (bypass drop_peak_cf)
+                peak_pars = drop_peak_overlap(peak_pars, opt.proximity_threshold); % remove smallest of two peaks fit too closely
+            end
+            
+            % Remove peaks and Refit aperiodic
+            aperiodic = spec;
+            for peak = 1:size(peak_pars,1)
+                aperiodic = aperiodic - peak_function(freqs,peak_pars(peak,1), peak_pars(peak,2), peak_pars(peak,3));
+            end
+            
+%             figure;
+%             plot(log10(freqs),model_fit); hold on;
+%             plot(log10(freqs),fooof_results2.fooofed_spectrum); hold on;
+%             plot(log10(freqs), aperiodic, 'red');
+            
+            aperiodic_pars = simple_ap_fit(freqs, aperiodic, opt.aperiodic_mode);
+            % Generate model fit
+            ap_fit = gen_aperiodic(freqs, aperiodic_pars, opt.aperiodic_mode);
+            model_fit = ap_fit;
+            for peak = 1:size(peak_pars,1)
+                model_fit = model_fit + peak_function(freqs,peak_pars(peak,1),...
+                    peak_pars(peak,2),peak_pars(peak,3));
+            end
+%             
+%             figure;
+%             plot(log10(freqs),log10(mean_pow)); hold on;
+%             plot(log10(freqs), ap_fit, 'red');
+%             plot(log10(freqs), fooof_results.ap_fit, 'green');
+            
+            % Calculate model error
+            MSE = sum((spec - model_fit).^2)/length(model_fit);
+            rsq_tmp = corrcoef(spec,model_fit).^2;
+            
+            % Return FOOOF results
+            fooof_results                   = [];
+            fooof_results.r_squared         = rsq_tmp(2);
+            fooof_results.error             = MSE;
+            fooof_results.peak_params       = peak_pars;
+            fooof_results.ap_fit            = ap_fit;
+            fooof_results.aperiodic_params  = aperiodic_pars;
+            fooof_results.freqs             = freqs;
+            fooof_results.power_spectrum    = spec;
+            fooof_results.fooofed_spectrum  = model_fit;
+            
     end
-    f_range = freqs([1 end]);
-
-    tic;
-    fooof_results = fooof(freqs, mean_pow, f_range, settings,true);
-    elapsed = toc;
-    %fprintf('TIC TOC: %g\n', elapsed);
-%     
-%     figure;
-%     plot(log10(freqs),log10(mean_pow)); hold on;
-%     plot(log10(freqs), fooof_results.ap_fit, 'red');
-%     
-%     %% Run FOOOF using MATLAB Fieldtrip/Brainstorm Code
-%     % check for brainstorm functions on the path, and add if needed
-%     ft_hastoolbox('brainstorm', 1);
-%     
-%     opts_bst  = getfield(process_fooof('GetDescription'), 'options');
-%     
-%     % Fetch user settings, this is a chunk of code copied over from
-%     % process_fooof, to bypass the whole database etc handling.
-%     cfg.fooof.aperiodic_mode = 'knee';
-%     opt                     = ft_getopt(cfg, 'fooof', []);
-%     opt.freq_range          = ft_getopt(opt, 'freq_range', freqs([1 end]));
-%     opt.peak_width_limits   = ft_getopt(opt, 'peak_width_limits', opts_bst.peakwidth.Value{1});
-%     opt.max_peaks           = ft_getopt(opt, 'max_peaks',         2);
-%     opt.min_peak_height     = ft_getopt(opt, 'min_peak_height',   0); % convert from dB to B
-%     opt.peak_threshold      = ft_getopt(opt, 'peak_threshold',    3);   % 2 std dev: parameter for interface simplification
-%     opt.return_spectrum     = ft_getopt(opt, 'return_spectrum',   1);   % SPM/FT: set to 1
-%     opt.apermode.Value   = 'knee';
-%     %     opt.border_threshold    = ft_getopt(opt, 'border_threshold',  1);   % 1 std dev: proximity to edge of spectrum, static in Python 
-% %     % Matlab-only options
-%     opt.power_line          = ft_getopt(opt, 'power_line',        'inf'); % for some reason it should be a string, if you don't want a notch, use 'inf'. Brainstorm's default is '60'
-%      opt.peak_type           = ft_getopt(opt, 'peak_type',         opts_bst.peaktype.Value);
-%      opt.proximity_threshold = ft_getopt(opt, 'proximity_threshold', 1);
-%      opt.guess_weight        = ft_getopt(opt, 'guess_weight',      opts_bst.guessweight.Value);
-%      opt.thresh_after        = ft_getopt(opt, 'thresh_after',      true);   % Threshold after fitting always selected for Matlab (mirrors the Python FOOOF closest by removing peaks that do not satisfy a user's predetermined conditions)
-%     
-% %     % Output options
-% %     opt.sort_type  = opts_bst.sorttype.Value;
-% %     opt.sort_param = opts_bst.sortparam.Value;
-% %     opt.sort_bands = opts_bst.sortbands.Value;
-%     
-%     hasOptimTools = 0;
-% %     if exist('fmincon', 'file')
-% %       hasOptimTools = 1;
-% %       disp('Using constrained optimization, Guess Weight ignored.');
-% %     end
-%     
-%     mean_pow2 = reshape(mean_pow,[1 1 38]);
-%     
-%     [fs, fg] = process_fooof('FOOOF_matlab',mean_pow2, freqs, opt, hasOptimTools);
-%       
-%     figure;
-%     plot(log10(freqs),log10(mean_pow),'k','LineWidth',2); hold on;
-%     plot(log10(freqs), log10(fg.ap_fit), 'red','LineWidth',2);
-%     plot(log10(freqs), fooof_results.ap_fit, 'blue','LineWidth',2);
-%     legend({'','MATLAB','Python'});
-% 
-%     % Plot the full model fit
-%     figure;
-%     plot(log10(freqs),mean_pow); hold on;
-%     plot(log10(freqs), fg.ap_fit, 'b--');
-%     
-%      % Plot the full model fit
-%     figure;
-%     plot(log10(freqs),log10(mean_pow)); hold on;
-%     %plot(log10(freqs), fooof_results.ap_fit, 'b--');   
-%     plot(log10(freqs), log10(fg.ap_fit), 'g--');
-% 
-%     % Plot the full model fit
-%     figure;
-%     plot(fs, fg.fooofed_spectrum, 'red');
-%     plot(fs, fg.ap_fit, 'b--');
-% % Plot the full model fit
-%     figure;
-%     plot(fs, fg.fooofed_spectrum, 'red');
-%     plot(fs, fg.ap_fit, 'b--');
-%       
-%     cfg.log_freqs = 1;
-%     cfg.plot_old = 0;
-%     fBOSC_fooof_plot(cfg,fBOSC)
     
-    
-      
     %% Process Results
     mp = 10.^fooof_results.ap_fit;
     
-    % perform the linear fit, only including putatively aperiodic components (i.e., peak exclusion)
-    b = robustfit(log10(freqs),mean(log10(BG(:,:)),2)'); clear fitInput;
-    pv(1) = b(2); pv(2) = b(1);
+    % Instead of FOOOF, use original BOSC ordinary least squares regression
+    % to find the
+    [pv_BOSC,~]=BOSC_bgfit(cfg.fBOSC.F,BG);
     
-    mp_old = 10.^(polyval(pv,log10(cfg.fBOSC.F))); 
+%     b = robustfit(log10(freqs),mean(log10(BG(:,:)),2)'); clear fitInput;
+%     pv(1) = b(2); pv(2) = b(1);
     
-    % Force use of old mp value
+    mp_old = 10.^(polyval(pv_BOSC,log10(cfg.fBOSC.F))); 
+    
+    % Force use of original BOSC mp value rather than FOOOF
     if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
         mp = mp_old;
+        warning('NOT RECOMMENDED - not using FOOOF');
     end
     
     % compute fBOSC power (pt) and duration (dt) thresholds: 
