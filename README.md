@@ -31,7 +31,7 @@ In short, it provides more robust and flexible way of parametising the aperiodic
 
 As noted by Kosciessa et al., (2020), the standard BOSC analysis applies "a linear fit in log-log space to define the background power, which may overestimate the background at the frequencies of interest in the case of data with large rhythmic peaks." 
 
-The extended BOSC (eBOSC) toolbox uses MATLAB's robustfit function and allows the user to define peaks in the power spectrum, and these frequencies will not be used during the linear fit in log-log space.
+The [extended BOSC (eBOSC) toolbox](https://github.com/jkosciessa/eBOSC) uses MATLAB's robustfit function and allows the user to define peaks in the power spectrum, and these frequencies will not be used during the linear fit in log-log space.
 
 **However two problems remain:**
 
@@ -113,20 +113,25 @@ As you can see both the eBOSC and fooof_mat folders are present, along with the 
 **[FANCY iPython NOTEBOOK](./validation/test_fBOSC.ipynb)**
 
 
-## Citations:
+## Code and Citations
+
+Please note, this code is built upon the original BOSC and [extended (eBOSC)](https://github.com/jkosciessa/eBOSC) implementations. These can be found in the /eBOSC folder and eBOSC/external/BOSC folder. Any new code (written by Robert A Seymour) is within /custom /experimental /media /simulation or /validation folders. 
+
+**The license is GNU General Public License v3.0.**
 
 If you use this code please cite the following:
-
-```
-Donoghue, T., Haller, M., Peterson, E. J., Varma, P., Sebastian, P., Gao, R., ... & Voytek, B. (2020). Parameterizing neural power spectra into periodic and aperiodic components. Nature Neuroscience, 23(12), 1655-1665.
-```
-
 ```
 Kosciessa, J. Q., Grandy, T. H., Garrett, D. D., & Werkle-Bergner, M. (2020). Single-trial characterization of neural rhythms: Potential and challenges. Neuroimage, 206, 116331.
 ```
 
 ```
 Citation for fBOSC coming soon
+```
+
+In addition, please think about citing the original authors of the FOOOF algorithm:
+
+```
+Donoghue, T., Haller, M., Peterson, E. J., Varma, P., Sebastian, P., Gao, R., ... & Voytek, B. (2020). Parameterizing neural power spectra into periodic and aperiodic components. Nature Neuroscience, 23(12), 1655-1665.
 ```
 
 ## Acknowledgments:
