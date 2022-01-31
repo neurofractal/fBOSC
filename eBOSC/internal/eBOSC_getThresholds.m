@@ -51,8 +51,9 @@ function [eBOSC, pt, dt] = eBOSC_getThresholds(cfg, TFR, eBOSC)
             % find empirical peak in specified range
             freqInd1 = find(cfg.eBOSC.F >= cfg.eBOSC.threshold.excludePeak(indExFreq,1), 1, 'first');
             freqInd2 = find(cfg.eBOSC.F <= cfg.eBOSC.threshold.excludePeak(indExFreq,2), 1, 'last');
-            [~, indPos] = max(mean(BG(freqInd1:freqInd2,:),2));
-            indPos = freqInd1+indPos;
+            freqidx = freqInd1:freqInd2;
+            [~, indPos] = max(mean(BG(freqidx,:),2));
+            indPos = freqidx(indPos);
             % approximate wavelet extension in frequency domain
             % note: we do not remove the specified range, but the FWHM
             % around the empirical peak
@@ -69,8 +70,6 @@ function [eBOSC, pt, dt] = eBOSC_getThresholds(cfg, TFR, eBOSC)
     b = robustfit(log10(fitInput.f_),mean(log10(fitInput.BG_),2)'); clear fitInput;
     pv(1) = b(2); pv(2) = b(1);
     mp = 10.^(polyval(pv,log10(cfg.eBOSC.F))); 
-    
-    
 
     % compute eBOSC power (pt) and duration (dt) thresholds: 
     % power threshold is based on a chi-square distribution with df=2 and mean as estimated above
@@ -80,9 +79,9 @@ function [eBOSC, pt, dt] = eBOSC_getThresholds(cfg, TFR, eBOSC)
 
     % save multiple time-invariant estimates that could be of interest:
     % overall wavelet power spectrum (NOT only background)
-    eBOSC.static.bg_pow(cfg.tmp.channel(1),:)        = mean(BG(:,cfg.eBOSC.pad.total_sample+1:end-cfg.eBOSC.pad.total_sample),2);
+    eBOSC.static.bg_pow(cfg.tmp.channel(1),:)        = mean(BG(:,:),2);
     % log10-transformed wavelet power spectrum (NOT only background)
-    eBOSC.static.bg_log10_pow(cfg.tmp.channel(1),:)  = mean(log10(BG(:,cfg.eBOSC.pad.total_sample+1:end-cfg.eBOSC.pad.total_sample)),2);
+    eBOSC.static.bg_log10_pow(cfg.tmp.channel(1),:)  = mean(log10(BG(:,:)),2);
     % intercept and slope parameters of the robust linear 1/f fit (log-log)
     eBOSC.static.pv(cfg.tmp.channel(1),:)            = pv;
     % linear background power at each estimated frequency
