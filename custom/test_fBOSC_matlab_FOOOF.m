@@ -1,5 +1,5 @@
 %%
-% An example analysis pipeline using fBOSC, using simulated data
+% An example analysis pipeline using fBOSC, and simulated data
 %__________________________________________________________________________
 % Copyright (C) 2022 Wellcome Trust Centre for Neuroimaging
 
@@ -19,9 +19,9 @@ start_fBOSC
 load(fullfile(root,'..','validation','synaptic.mat'));
 
 % Settings
-ntrials                     = 10;   % Number of trials 
+ntrials                     = 100;   % Number of trials 
 Fs                          = 500;  % Sampling Rate
-SNR                         = 40;   % SNR of oscillation
+SNR                         = 20;   % SNR of oscillation
 len_of_trial                = 20;   % Length of each trial in s
 
 % Trim aperiodic data down to size of ntrials*len_of_trial
@@ -57,13 +57,14 @@ title('Combined Data');
 %% Set-up fBOSC parameters
 
 % general setup
-cfg.fBOSC.F                 = 2.^[1:.125:5.4];
+%cfg.fBOSC.F                 = 2.^[1:.125:5.4];
+cfg.fBOSC.F                 = [2:0.5:40];
 cfg.fBOSC.wavenumber        = 6;           % wavelet family parameter (time-frequency tradeoff)
 cfg.fBOSC.fsample           = Fs;         % current sampling frequency of EEG data
 
 % padding
 cfg.fBOSC.pad.tfr_s         = 0.1;      % padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
-cfg.fBOSC.pad.detection_s   = .1;       % padding following rhythm detection in seconds (bi-lateral); 'shoulder' for BOSC eBOSC.detected matrix to account for duration threshold
+cfg.fBOSC.pad.detection_s   = 0.1;       % padding following rhythm detection in seconds (bi-lateral); 'shoulder' for BOSC eBOSC.detected matrix to account for duration threshold
 cfg.fBOSC.pad.background_s  = 0.1;      % padding of segments for BG (only avoiding edge artifacts)
 
 % fooof parameters - fit with fixed line or allow a knee
@@ -98,7 +99,8 @@ set(gcf,'Position',[100 100 1200 600]);
 
 for indTrial = 1:10
     
-    % This is the crcu
+    % This is the crucial bit of code that gets the detected time(s) of
+    % oscillatory bursts from each trial
     tmpDetected = single(squeeze(nanmean(fBOSC.detected(1, ...
         indTrial,cfg.fBOSC.F > 8 & cfg.fBOSC.F < 13,:),3))>0); ...
         tmpDetected(tmpDetected==0) = NaN;
@@ -123,7 +125,9 @@ for indTrial = 1:10
 end
 
 
-%% Let's plot the same thing but in TFR space
+%% Let's plot the same thing but using TFRs
+
+% Compute TFRs
 TFR = [];
 for indTrial = 1:length(data_alpha.trial)
     TFR.trial{indTrial} = BOSC_tf(data_alpha.trial{indTrial},...
@@ -131,7 +135,7 @@ for indTrial = 1:length(data_alpha.trial)
 end; clear indTrial
 
 
-
+% Plot the figure
 figure;
 set(gcf,'Position',[100 100 1200 900]);
 
@@ -139,9 +143,10 @@ for indTrial = 1:10
     subplot(10,1,indTrial)
     TFR_ = TFR.trial{indTrial}(:,101:9900); % Account for padding
     
+    % This is the crucial bit of code 
     tmpDetected = logical(squeeze(fBOSC.detected(1,indTrial,:,:)));
 
-   
+    % Plot
     imagesc('YData',log10(cfg.fBOSC.F),'XData',data_alpha.time{1},'CData',...
         TFR_,'AlphaData', tmpDetected); hold on;
     imagesc('YData',log10(cfg.fBOSC.F),'XData',data_alpha.time{1},'CData',...

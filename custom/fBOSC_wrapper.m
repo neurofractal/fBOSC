@@ -2,7 +2,7 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
 % Main fBOSC wrapper function. Executes fBOSC subfunctions.
 %
 % Inputs: 
-%           cfg | config structure with cfg.eBOSC field:
+%           cfg | config structure with cfg.fBOSC field:
 %                     cfg.fBOSC.F                     | frequency sampling
 %                     cfg.fBOSC.wavenumber            | wavelet family parameter (time-frequency tradeoff)
 %                     cfg.fBOSC.fsample               | current sampling frequency of EEG data
@@ -28,7 +28,7 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
 %
 % Outputs: 
 %           fBOSC | main fBOSC output structure
-%               fBOSC.episodes | table of individual rhythmic episodes (see eBOSC_episode_create)
+%               fBOSC.episodes | table of individual rhythmic episodes (see fBOSC_episode_create)
 %               fBOSC.detected | binary matrix of detected time-frequency points (prior to episode creation)
 %               fBOSC.pepisode | temporal average of detected rhythms (prior to episode creation)
 %               fBOSC.detected_ep | binary matrix of detected time-frequency points (following episode creation)
@@ -49,7 +49,13 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
         cfg.fBOSC.trial_background = 1:numel(data.trial);
     end
     
-    % Some defaults for fooof
+    % Some defaults for fooof:
+    % Use python implementation by default (for now)
+    if ~isfield(cfg.fBOSC.fooof,'version')
+        cfg.fBOSC.fooof.version = 'python';
+    end  
+    
+    % Use fixed aperiodic mode as default
     if ~isfield(cfg.fBOSC.fooof,'aperiodic_mode')
         cfg.fBOSC.fooof.aperiodic_mode = 'fixed';
         disp('FOOOF will fit without a knee parameter');

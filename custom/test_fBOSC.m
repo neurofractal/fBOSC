@@ -57,7 +57,8 @@ title('Combined Data');
 %% Set-up fBOSC parameters
 
 % general setup
-cfg.fBOSC.F                 = 2.^[1:.125:5.4];
+%cfg.fBOSC.F                 = 2.^[1:.125:5.4];
+cfg.fBOSC.F                 = [2:0.5:40];
 cfg.fBOSC.wavenumber        = 6;           % wavelet family parameter (time-frequency tradeoff)
 cfg.fBOSC.fsample           = Fs;         % current sampling frequency of EEG data
 
@@ -68,6 +69,7 @@ cfg.fBOSC.pad.background_s  = 0.1;      % padding of segments for BG (only avoid
 
 % fooof parameters - fit with fixed line or allow a knee
 cfg.fBOSC.fooof.aperiodic_mode    = 'knee';
+cfg.fBOSC.fooof.version           = 'matlab';
 
 % threshold settings
 cfg.fBOSC.threshold.duration	= repmat(3, 1, numel(cfg.fBOSC.F)); % vector of duration thresholds at each frequency (previously: ncyc)
