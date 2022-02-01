@@ -11,8 +11,7 @@ try
     py.importlib.import_module('fooof');
     disp('Successfully imported fooof from python!');
 catch
-    error('Problem loading fooof from python');
-    warning('You will need to use the MATLAB implementation of FOOOF');
+    warning('You will need to use the MATLAB implementation of FOOOF');   
 end
 
 end
