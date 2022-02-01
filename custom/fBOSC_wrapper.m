@@ -1,3 +1,18 @@
+%%
+% fBOSC_wrapper() - Wrapper for fBOSC
+%__________________________________________________________________________
+% Copyright (C) 2022 Wellcome Trust Centre for Neuroimaging
+
+% Authors:  Robert Seymour      (rob.seymour@ucl.ac.uk) 
+%__________________________________________________________________________
+%    
+%    This file is part of the fBOSC library.
+%    License: The GNU General Public License v3.0
+%
+%    Built on work by Kosciessa and colleagues
+%    https://github.com/jkosciessa/eBOSC
+%__________________________________________________________________________
+
 function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
 % Main fBOSC wrapper function. Executes fBOSC subfunctions.
 %
