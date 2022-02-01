@@ -26,7 +26,9 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
 %                     cfg.fBOSC.pad.total_s           | complete padding (WL + shoulder)
 %                     cfg.fBOSC.pad.background_s      | padding of segments for BG (only avoiding edge artifacts)
 %                     cfg.fBOSC.fooof.aperiodic_mode  | which approach to take for fitting the aperiodic component ('fixed' or'knee')
+%                     cfg.fBOSC.fooof.fit_function    | fit the gaussian using 'fooof' or 'matlab' gaussian fit function (default = 'fooof')
 %                     cfg.fBOSC.fooof.verbose         | fooof verbosity mode. If True, prints out warnings and general status updates (default = 0)
+%
 %                     cfg.fBOSC.threshold.duration    | vector of duration thresholds at each frequency (previously: ncyc)
 %                     cfg.fBOSC.threshold.percentile  | percentile of background fit for power threshold
 %                     cfg.fBOSC.postproc.use          | Post-processing of rhythmic eBOSC.episodes, i.e., wavelet 'deconvolution' (default = 'no')
@@ -76,9 +78,15 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
         disp('FOOOF will fit without a knee parameter');
     end
     
+    % Verbose for fooof
     if ~isfield(cfg.fBOSC.fooof,'verbose')
         cfg.fBOSC.fooof.verbose = 0;
-    end   
+    end
+
+    % Verbose for fooof
+    if ~isfield(cfg.fBOSC.fooof,'fit_function')
+        cfg.fBOSC.fooof.fit_function = 'fooof';
+    end
     
     % calculate the sample points for paddding
     cfg.fBOSC.pad.tfr_sample = cfg.fBOSC.pad.tfr_s.*cfg.fBOSC.fsample;                          % automatic sample point calculation

@@ -1,4 +1,4 @@
-function [model_params,peak_function] = fit_peaks(freqs, flat_iter, ...
+function [model_params,peak_function] = fit_peaks_interp(freqs, flat_iter, ...
     max_n_peaks, peak_threshold, min_peak_height, gauss_std_limits, ...
     proxThresh, peakType, guess_weight, hOT,usefit,verbose)
 %       Iteratively fit peaks to flattened spectrum.
@@ -26,11 +26,23 @@ function [model_params,peak_function] = fit_peaks(freqs, flat_iter, ...
 %       hOT : 0 or 1
 %           Defines whether to use constrained optimization, fmincon, or
 %           basic simplex, fminsearch.
+%       usefit: 0 or 1
+%           Use the MATLAB Gaussian fitting function instead of guessing
+%           fwhm using weird methods.
 %
 %       Returns
 %       -------
 %       gaussian_params : mx3 array, where m = No. of peaks.
 %           Parameters that define the peak fit(s). Each row is a peak, as [mean, height, st. dev. (gamma)].
+
+% Interpolate
+freqs_spare     = freqs; % save spare for later
+flat_iter_spare = flat_iter;
+min_freq_dist   = min(diff(freqs_spare)); % Find smallest interval
+freqs    = [freqs_spare(1):min_freq_dist:freqs_spare(end)];
+
+flat_iter = interp1(freqs_spare,flat_iter,freqs,'spline');
+
     switch peakType 
         case 'gaussian' % gaussian only
             peak_function = @gaussian; % Identify peaks as gaussian
@@ -72,12 +84,12 @@ function [model_params,peak_function] = fit_peaks(freqs, flat_iter, ...
                 % Grab the shortest side, ignoring a side if the half max was not found.
                 % Note: will fail if both le & ri ind's end up as None (probably shouldn't happen).
                 short_side = min(abs([le_ind,ri_ind]-max_ind));
-                
+
                 % Estimate std from FWHM. Calculate FWHM, converting to Hz, get guess std from FWHM
                 
                 fwhm = short_side * 2 * (freqs(2)-freqs(1));
                 guess_std = fwhm / (2 * sqrt(2 * log(2)));
-                
+
                 % Other option is to use the gaussian MATLAB fit
                 if usefit
                     f = fit(freqs.',flat_iter.','gauss1');

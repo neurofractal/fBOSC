@@ -13,15 +13,15 @@ cd(fullfile(root,'..'));
 start_fBOSC
 
 %% Make simulated data with 10hz oscillations embedded within a 
-%  non-linear 1/f aperiodic signal
+%  non-synaptic 1/f aperiodic signal
 
 % Load the previously computed non-linear 1/f aperiodic signal
 load(fullfile(root,'..','validation','synaptic.mat'));
 
 % Settings
-ntrials                     = 100;   % Number of trials 
+ntrials                     = 10;   % Number of trials 
 Fs                          = 500;  % Sampling Rate
-SNR                         = 20;   % SNR of oscillation
+SNR                         = 40;   % SNR of oscillation
 len_of_trial                = 20;   % Length of each trial in s
 
 % Trim aperiodic data down to size of ntrials*len_of_trial
@@ -30,7 +30,7 @@ synaptic                   = synaptic(1:ntrials,[1:(len_of_trial*Fs)]);
 % HP-Filter @ 1Hz, like in typical EEG/MEG studies
 for n = 1:ntrials
     synaptic(n,:) = ft_preproc_highpassfilter(synaptic(n,:), Fs,...
-        1, 3);
+        0.5, 3);
 end
 
 % Simulate
@@ -57,18 +57,21 @@ title('Combined Data');
 %% Set-up fBOSC parameters
 
 % general setup
-%cfg.fBOSC.F                 = 2.^[1:.125:5.4];
-cfg.fBOSC.F                 = [2:0.5:40];
+cfg.fBOSC.F                 = 2.^[1:.125:5.4];
+%cfg.fBOSC.F                 = [1:0.5:40];
 cfg.fBOSC.wavenumber        = 6;           % wavelet family parameter (time-frequency tradeoff)
 cfg.fBOSC.fsample           = Fs;         % current sampling frequency of EEG data
 
 % padding
 cfg.fBOSC.pad.tfr_s         = 0.1;      % padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
-cfg.fBOSC.pad.detection_s   = 0.1;       % padding following rhythm detection in seconds (bi-lateral); 'shoulder' for BOSC eBOSC.detected matrix to account for duration threshold
+cfg.fBOSC.pad.detection_s   = .1;       % padding following rhythm detection in seconds (bi-lateral); 'shoulder' for BOSC eBOSC.detected matrix to account for duration threshold
 cfg.fBOSC.pad.background_s  = 0.1;      % padding of segments for BG (only avoiding edge artifacts)
 
 % fooof parameters - fit with fixed line or allow a knee
 cfg.fBOSC.fooof.aperiodic_mode    = 'knee';
+cfg.fBOSC.fooof.verbose          = 1;
+cfg.fBOSC.fooof.fit_function      = 'fooof';
+cfg.fBOSC.fooof.version           = 'matlab';
 
 % threshold settings
 cfg.fBOSC.threshold.duration	= repmat(3, 1, numel(cfg.fBOSC.F)); % vector of duration thresholds at each frequency (previously: ncyc)

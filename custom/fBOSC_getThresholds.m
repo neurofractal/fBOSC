@@ -76,6 +76,13 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
         case 'matlab'
             %% Run FOOOF using MATLAB Code
             
+            % Get which gaussian fit function to use
+            if strcmp(cfg.fBOSC.fooof.fit_function,'matlab')
+                use_matlab_fit_function = 1;
+            else
+                use_matlab_fit_function = 0;
+            end
+
             % NOTE: This will only work well for situations in which
             % frequency resolution is constant (i.e. 1,2,3,4...Hz). Future
             % work will be needed to improve this. For now warn the user
@@ -100,10 +107,10 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
             opt.thresh_after        = true;
             if license('test','optimization_toolbox') % check for optimization toolbox
                 opt.hOT = 1;
-                disp('Using constrained optimization, Guess Weight ignored.')
+                disp('FOOOF: Using constrained optimization, Guess Weight ignored.')
             else
                 opt.hOT = 0;
-                disp('Using unconstrained optimization, with Guess Weights.')
+                disp('FOOOF: Using unconstrained optimization, with Guess Weights.')
             end
             opt.rmoutliers          = 'yes';
             opt.maxfreq             = 2.5;
@@ -118,10 +125,16 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
             % Fit aperiodic using robust_ap_fit
             aperiodic_pars = robust_ap_fit(freqs, spec, opt.aperiodic_mode);
             
-%             figure;
-%             ap_fit1 = gen_aperiodic(freqs, aperiodic_pars, opt.aperiodic_mode);
-%             plot(log10(freqs),spec); hold on;
-%             plot(log10(freqs),ap_fit1); hold on;
+            if cfg.fBOSC.fooof.verbose
+                figure;
+                ap_fit1 = gen_aperiodic(freqs, aperiodic_pars, opt.aperiodic_mode);
+                plot(log10(freqs),spec); hold on;
+                plot(log10(freqs),ap_fit1); hold on;
+                title('Initial 1/f fit');
+                set(gca,'FontSize',18);
+                xlabel('Log Freqs (Hz)','FontSize',20);
+                ylabel('Log Power a.u.','FontSize',20);
+            end
             
             % Remove aperiodic component
             flat_spec = flatten_spectrum(freqs, spec, aperiodic_pars, opt.aperiodic_mode);
@@ -130,9 +143,24 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
 %             plot(log10(freqs), flat_spec, '-ro');
             
             % Fit peaks
-            [peak_pars, peak_function] = fit_peaks(freqs, flat_spec, opt.max_peaks, opt.peak_threshold, opt.min_peak_height, ...
-                opt.peak_width_limits/2, opt.proximity_threshold, opt.peak_type, opt.guess_weight,opt.hOT);
-            
+            if all(diff_freq == diff_freq(1))
+                [peak_pars, peak_function] = fit_peaks(freqs, flat_spec, ...
+                    opt.max_peaks, opt.peak_threshold, opt.min_peak_height, ...
+                    opt.peak_width_limits/2, opt.proximity_threshold, ...
+                    opt.peak_type, opt.guess_weight,opt.hOT,...
+                    use_matlab_fit_function,cfg.fBOSC.fooof.verbose);
+            else
+                disp(['Increasing frequency resolution to '...
+                    num2str(min(diff_freq)) ' Hz']);
+                [peak_pars, peak_function] = fit_peaks_interp(freqs,...
+                    flat_spec, opt.max_peaks, opt.peak_threshold, ...
+                    opt.min_peak_height, opt.peak_width_limits/2, ...
+                    opt.proximity_threshold, opt.peak_type, ...
+                    opt.guess_weight,opt.hOT,...
+                    use_matlab_fit_function,cfg.fBOSC.fooof.verbose);
+            end
+
+
             if opt.thresh_after && ~opt.hOT  % Check thresholding requirements are met for unbounded optimization
                 peak_pars(peak_pars(:,2) < opt.min_peak_height,:)     = []; % remove peaks shorter than limit
                 peak_pars(peak_pars(:,3) < opt.peak_width_limits(1)/2,:)  = []; % remove peaks narrower than limit
@@ -148,11 +176,15 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
                 aperiodic = aperiodic - peak_function(freqs,peak_pars(peak,1), peak_pars(peak,2), peak_pars(peak,3));
             end
             
-%             figure;
-%             plot(log10(freqs),model_fit); hold on;
-%             plot(log10(freqs),fooof_results2.fooofed_spectrum); hold on;
-%             plot(log10(freqs), aperiodic, 'red');
-            
+            if cfg.fBOSC.fooof.verbose
+                figure;
+                plot(log10(freqs), aperiodic, 'red');
+                title('Flattened Spectrum with No Peaks');
+                set(gca,'FontSize',18);
+                xlabel('Log Freqs (Hz)','FontSize',20);
+                ylabel('Log Power a.u.','FontSize',20);
+            end
+
             aperiodic_pars = simple_ap_fit(freqs, aperiodic, opt.aperiodic_mode);
             % Generate model fit
             ap_fit = gen_aperiodic(freqs, aperiodic_pars, opt.aperiodic_mode);
@@ -161,16 +193,23 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
                 model_fit = model_fit + peak_function(freqs,peak_pars(peak,1),...
                     peak_pars(peak,2),peak_pars(peak,3));
             end
-%             
-%             figure;
-%             plot(log10(freqs),log10(mean_pow)); hold on;
-%             plot(log10(freqs), ap_fit, 'red');
-%             plot(log10(freqs), fooof_results.ap_fit, 'green');
             
             % Calculate model error
             MSE = sum((spec - model_fit).^2)/length(model_fit);
             rsq_tmp = corrcoef(spec,model_fit).^2;
             
+            if cfg.fBOSC.fooof.verbose
+                figure;
+                plot(log10(freqs),log10(mean_pow),'k','LineWidth',3); hold on;
+                plot(log10(freqs), ap_fit, '--r','LineWidth',2);
+                plot(log10(freqs), model_fit, 'green');
+                title(['Overall fit. Error: ', num2str( rsq_tmp(2))]);
+                legend({'','1/f fit','model fit'});
+                set(gca,'FontSize',18);
+                xlabel('Log Freqs (Hz)','FontSize',20);
+                ylabel('Log Power a.u.','FontSize',20);
+            end
+
             % Return FOOOF results
             fooof_results                   = [];
             fooof_results.r_squared         = rsq_tmp(2);

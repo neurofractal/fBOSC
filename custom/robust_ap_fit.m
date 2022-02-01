@@ -22,8 +22,8 @@ function aperiodic_params = robust_ap_fit(freqs, power_spectrum, aperiodic_mode)
     % Flatten power_spectrum based on initial aperiodic fit
     flatspec = power_spectrum - initial_fit;
     
-    figure;plot(log10(freqs),power_spectrum); hold on
-    plot(log10(freqs),flatspec);
+%     figure;plot(log10(freqs),power_spectrum); hold on
+%     plot(log10(freqs),flatspec);
     
     % Flatten outliers - any points that drop below 0
     flatspec(flatspec(:) < 0) = 0;
