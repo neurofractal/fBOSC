@@ -35,9 +35,9 @@ The [extended BOSC (eBOSC) toolbox](https://github.com/jkosciessa/eBOSC) uses MA
 
 **However two problems remain:**
 
-**1. Where multiple peaks exist in the power spectrum, the exclusion of many frequencies will lead to poor linear fits**
+#### **1. Where multiple peaks exist in the power spectrum, the exclusion of many frequencies will lead to poor linear fits**
 
-**2. Both BOSC and eBOSC assume a single 1/f like characteristic to the aperiodic component, meaning it looks linear across all frequencies in log-log space. This is often not the case for neural data, especially across larger frequency ranges and MEG data. A linear fit in log-log space, is therefore not always suitable for electrophysiological data. See the [fooof documentation](https://fooof-tools.github.io/fooof/auto_tutorials/plot_05-AperiodicFitting.html) for more information.**
+#### **2. Both BOSC and eBOSC assume a single 1/f like characteristic to the aperiodic component, meaning it looks linear across all frequencies in log-log space. This is often not the case for neural data, especially across larger frequency ranges and MEG data. A linear fit in log-log space, is therefore not always suitable for electrophysiological data. See the [fooof documentation](https://fooof-tools.github.io/fooof/auto_tutorials/plot_05-AperiodicFitting.html) for more information.**
 
 ![](./media/example_no_fooof.png)
 
@@ -55,9 +55,9 @@ YES!
 
 In this example, I have simulated data with a nonlinear aperiodic frequency spectrum, alongside two oscillatory signals at 4Hz and 10Hz. The frequency spectrum is plotted in the thick black line. 
 
-![](./media/SNR23_synaptic.png)
+![](./media/SNR25.png)
 
-The coloured dotted lines are the power thresholds computed using using BOSC (no frequencies excluded) and eBOSC (frequencies around the theta and alpha peaks excluded), and fBOSC. 
+The coloured dotted lines are the 1/f fits computed using BOSC (orange, no frequencies excluded) and eBOSC (pink, robustfit and frequencies around the theta and alpha peaks excluded), and fBOSC (blue). 
 
 Because we know apriori, the exact characteristics of the original aperiodic data, we can compute the root mean squared error (RMSE) from the 1/f fits estimated using BOSC, eBOSC and fBOSC:
 
@@ -79,13 +79,13 @@ This is the same for false alarm rate:
 
 ![](./validation/FA_avg.png)
 
-## So how do I use fBOSC?
+## Using fBOSC
 
 #### 1. Download fBOSC
 
 From [https://github.com/neurofractal/fBOSC](https://github.com/neurofractal/fBOSC)
 
-#### 2. Install FOOOF (a python package)
+#### 2. Install FOOOF (a Python package)
 
 The [FOOOF documentation](https://fooof-tools.github.io/fooof/index.html#installation) has clear + simple instructions for installing the package. You will also need to install scipy and numpy.
 
@@ -106,11 +106,11 @@ start_fBOSC
 
 As you can see both the eBOSC and fooof_mat folders are present, along with the fBOSC scripts in the 'custom' folder. 
 
-#### 4. Try out the test scripts
+## Test scripts
 
-**[RAW MATLAB SCRIPT](./custom/test_fBOSC.m)**
+#### **[RAW MATLAB SCRIPT](./custom/test_fBOSC.m)**
 
-**[FANCY iPython NOTEBOOK](./validation/test_fBOSC.ipynb)**
+#### **[FANCY iPython NOTEBOOK](./validation/test_fBOSC.ipynb)**
 
 
 ## Code and Citations
