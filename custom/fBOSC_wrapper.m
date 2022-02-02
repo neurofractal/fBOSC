@@ -132,7 +132,7 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
         
     % min_peak_height for fooof
     if ~isfield(cfg.fBOSC.fooof,'min_peak_height')
-        cfg.fBOSC.fooof.min_peak_height =  3;
+        cfg.fBOSC.fooof.min_peak_height =  0.1;
     end
     
     % calculate the sample points for paddding
