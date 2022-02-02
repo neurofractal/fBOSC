@@ -96,8 +96,8 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
             opt                     = [];
             opt.freq_range          = freqs([1 end]);
             opt.peak_width_limits   = [2 6];
-            opt.max_peaks           = 3;
-            opt.min_peak_height     = 0.1; 
+            opt.max_peaks           = cfg.fBOSC.fooof.max_peaks;
+            opt.min_peak_height     = cfg.fBOSC.fooof.min_peak_height; 
             opt.aperiodic_mode      = cfg.fBOSC.fooof.aperiodic_mode;
             opt.peak_threshold      = 2.0;   % 2 std dev: parameter for interface simplification
             % Matlab-only options
@@ -107,10 +107,14 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
             opt.thresh_after        = true;
             if license('test','optimization_toolbox') % check for optimization toolbox
                 opt.hOT = 1;
-                disp('FOOOF: Using constrained optimization, Guess Weight ignored.')
+                if cfg.fBOSC.fooof.verbose
+                    disp('FOOOF: Using constrained optimization, Guess Weight ignored.');
+                end
             else
                 opt.hOT = 0;
-                disp('FOOOF: Using unconstrained optimization, with Guess Weights.')
+                if cfg.fBOSC.fooof.verbose
+                    disp('FOOOF: Using unconstrained optimization, with Guess Weights.');
+                end
             end
             opt.rmoutliers          = 'yes';
             opt.maxfreq             = 2.5;
@@ -143,6 +147,7 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
 %             plot(log10(freqs), flat_spec, '-ro');
             
             % Fit peaks
+            % Where frequency resolution is linear use default peak fitting
             if all(diff_freq == diff_freq(1))
                 [peak_pars, peak_function] = fit_peaks(freqs, flat_spec, ...
                     opt.max_peaks, opt.peak_threshold, opt.min_peak_height, ...
@@ -150,8 +155,15 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
                     opt.peak_type, opt.guess_weight,opt.hOT,...
                     use_matlab_fit_function,cfg.fBOSC.fooof.verbose);
             else
+                % Where frequency resolution is not linear, increase it via
+                % spline interpolation. 
+                %
+                % EXPERIMENTAL - proceed with caution
+                %
+                if cfg.fBOSC.fooof.verbose
                 disp(['Increasing frequency resolution to '...
                     num2str(min(diff_freq)) ' Hz']);
+                end
                 [peak_pars, peak_function] = fit_peaks_interp(freqs,...
                     flat_spec, opt.max_peaks, opt.peak_threshold, ...
                     opt.min_peak_height, opt.peak_width_limits/2, ...
