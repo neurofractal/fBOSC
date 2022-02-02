@@ -16,32 +16,63 @@
 function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
 % Main fBOSC wrapper function. Executes fBOSC subfunctions.
 %
-% Inputs: 
-%           cfg | config structure with cfg.fBOSC field:
-%                     cfg.fBOSC.F                     | frequency sampling
-%                     cfg.fBOSC.wavenumber            | wavelet family parameter (time-frequency tradeoff)
-%                     cfg.fBOSC.fsample               | current sampling frequency of EEG data
-%                     cfg.fBOSC.pad.tfr_s             | padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
-%                     cfg.fBOSC.pad.detection_s       | padding following rhythm detection in seconds (bi-lateral); 'shoulder' for BOSC eBOSC.detected matrix to account for duration threshold
-%                     cfg.fBOSC.pad.total_s           | complete padding (WL + shoulder)
-%                     cfg.fBOSC.pad.background_s      | padding of segments for BG (only avoiding edge artifacts)
-%                     cfg.fBOSC.fooof.aperiodic_mode  | which approach to take for fitting the aperiodic component ('fixed' or'knee')
-%                     cfg.fBOSC.fooof.fit_function    | fit the gaussian using 'fooof' or 'matlab' gaussian fit function (default = 'fooof')
-%                     cfg.fBOSC.fooof.verbose         | fooof verbosity mode. If True, prints out warnings and general status updates (default = 0)
+% Use as
+%   [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
+% where "data" is a Fieldtrip data structure with trial, time and channel
+% fields.
+
+% The configuration should contain:
 %
-%                     cfg.fBOSC.threshold.duration    | vector of duration thresholds at each frequency (previously: ncyc)
-%                     cfg.fBOSC.threshold.percentile  | percentile of background fit for power threshold
-%                     cfg.fBOSC.postproc.use          | Post-processing of rhythmic eBOSC.episodes, i.e., wavelet 'deconvolution' (default = 'no')
-%                     cfg.fBOSC.postproc.method       | Deconvolution method (default = 'MaxBias', FWHM: 'FWHM')
-%                     cfg.fBOSC.postproc.edgeOnly     | Deconvolution only at on- and offsets of eBOSC.episodes? (default = 'yes')
-%                     cfg.fBOSC.postproc.effSignal	  | Power deconvolution on whole signal or signal above power threshold? (default = 'PT')
-%                     cfg.fBOSC.channel               | Subset of channels? (default: [] = all)
-%                     cfg.fBOSC.trial                 | Subset of trials? (default: [] = all)
-%                     cfg.fBOSC.trial_background      | Subset of trials for background? (default: [] = all)
-%           data | input time series data in FieldTrip format with:
-%                | .trial field: {trial}(channel x time)
-%                | .time field: {trial}(channel x time)
-%                | .label field: {channelName}
+%       GENERAL OPTIONS:
+%   cfg.fBOSC.channel               = which channels to use (default: [] = all)
+%   cfg.fBOSC.trial                 = which trials to use (default: [] = all)
+%   cfg.fBOSC.trial_background      = use subset of trials for background fit? 
+%                                     (default: [] = all)
+%   cfg.fBOSC.F                     = frequency sampling
+%   cfg.fBOSC.wavenumber            = wavelet number parameter (TFR tradeoff)
+%   cfg.fBOSC.fsample               = sampling frequency of the data
+%
+%       PADDING OPTIONS:
+%   cfg.fBOSC.pad.tfr_s             = padding following wavelet transform to 
+%                                     avoid edge artifacts in seconds (bi-lateral)
+%   cfg.fBOSC.pad.detection_s       = padding following rhythm detection in 
+%                                     seconds (bi-lateral); 'shoulder' for 
+%                                     BOSC eBOSC.detected matrix to account 
+%                                     for duration threshold
+%   cfg.fBOSC.pad.total_s           = complete padding (WL + shoulder)
+%   cfg.fBOSC.pad.background_s      = padding of segments for background fit
+
+%       FOOOF OPTIONS:
+%   cfg.fBOSC.fooof.version         = 'matlab' or 'python' (default = 'python')
+%   cfg.fBOSC.fooof.aperiodic_mode  = which approach to take for fitting the 
+%                                     aperiodic component ('fixed' or'knee')
+%   cfg.fBOSC.fooof.max_peaks       = max number of peaks allowed for modelling 
+%                                     the power spectrum (default = 3)
+%   cfg.fBOSC.fooof.min_peak_height = minimum peak height when modelling the
+%                                     the power spectrum (default = 0.1)
+%   cfg.fBOSC.fooof.fit_function    = fit the gaussian using 'fooof' or 
+%                                     'matlab' gaussian fit function 
+%                                     (default = 'fooof')
+%   cfg.fBOSC.fooof.verbose         = fooof verbosity mode. If True, 
+%                                     prints out warnings and general 
+%                                     status updates (default = 0)
+%
+%       BURST DETECTION OPTIONS:
+%   cfg.fBOSC.threshold.duration    = vector of duration thresholds at each frequency
+%   cfg.fBOSC.threshold.percentile  = percentile of background fit for
+%                                     power threshold (default = 0.95)
+%       
+%       POST-PROCESSING
+%   cfg.fBOSC.postproc.use          = Post-processing of rhythmic 
+%                                     fBOSC.episodes, i.e., wavelet 
+%                                     'deconvolution' (default = 'no')
+%   cfg.fBOSC.postproc.method       = Deconvolution method (default = 
+%                                     'MaxBias', FWHM: 'FWHM')
+%   cfg.fBOSC.postproc.edgeOnly     = Deconvolution only at on- and offsets 
+%                                     of fBOSC.episodes? (default = 'yes')
+%   cfg.fBOSC.postproc.effSignal	= Power deconvolution on whole signal 
+%                                     or signal above power threshold? 
+%                                     (default = 'PT')
 %
 % Outputs: 
 %           fBOSC | main fBOSC output structure
@@ -66,6 +97,11 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
         cfg.fBOSC.trial_background = 1:numel(data.trial);
     end
     
+    % Default for % threshold at 95%
+    if isempty(cfg.fBOSC.threshold.percentile)
+        cfg.fBOSC.trial_background = 0.95;
+    end
+    
     % Some defaults for fooof:
     % Use python implementation by default (for now)
     if ~isfield(cfg.fBOSC.fooof,'version')
@@ -83,9 +119,20 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
         cfg.fBOSC.fooof.verbose = 0;
     end
 
-    % Verbose for fooof
+    % fit_function for fooof
     if ~isfield(cfg.fBOSC.fooof,'fit_function')
         cfg.fBOSC.fooof.fit_function = 'fooof';
+    end
+    
+    % max_peaks for fooof
+    if ~isfield(cfg.fBOSC.fooof,'max_peaks')
+        cfg.fBOSC.fooof.max_peaks =  3;
+    end
+    
+        
+    % min_peak_height for fooof
+    if ~isfield(cfg.fBOSC.fooof,'min_peak_height')
+        cfg.fBOSC.fooof.min_peak_height =  3;
     end
     
     % calculate the sample points for paddding
@@ -94,7 +141,8 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
     cfg.fBOSC.pad.total_s = cfg.fBOSC.pad.tfr_s + cfg.fBOSC.pad.detection_s;                    % complete padding (WL + shoulder)
     cfg.fBOSC.pad.total_sample = cfg.fBOSC.pad.tfr_sample + cfg.fBOSC.pad.detection_sample;
     cfg.fBOSC.pad.background_sample = cfg.fBOSC.pad.tfr_sample;
-
+    
+    % Start of Channel Loop:
     for indChan = 1: numel(cfg.fBOSC.channel)
     
         display(['Channel ',num2str(indChan), '/', ...
