@@ -5,6 +5,13 @@ tl;dr: This repository contains MATLAB code for combining BOSC and FOOOF
 
 Tutorial script **[HERE](./validation/test_fBOSC.ipynb)**
 
+
+## Contents
+{:.no_toc}
+
+- TOC
+{:toc}
+
 ### 1. BOSC
 The Better oscillation detection (BOSC) method has been widely used to characterise oscillatory activity in continuous data and/or at the single trial level. In brief, the method first computes a "power threshold" and a "duration threshold (DT)" for transient oscillatory burst detection. 
 
