@@ -7,8 +7,8 @@ Tutorial script **[HERE](./validation/test_fBOSC.ipynb)**
 
 
 - [fBOSC](#fbosc)
-  * [1. BOSC](#1-bosc)
-  * [2. FOOOF (Donoghue et al., 2020)](#2-fooof--donoghue-et-al--2020-)
+  * [BOSC](#bosc)
+  * [FOOOF (Donoghue et al., 2020)](#fooof--donoghue-et-al--2020-)
   * [So why use FOOOF in combination with BOSC?](#so-why-use-fooof-in-combination-with-bosc-)
   * [Does this really help?](#does-this-really-help-)
   * [What are the consequences of a poor 1/f fit?](#what-are-the-consequences-of-a-poor-1-f-fit-)
@@ -17,7 +17,7 @@ Tutorial script **[HERE](./validation/test_fBOSC.ipynb)**
   * [Code and Citations](#code-and-citations)
   * [Acknowledgments:](#acknowledgments-)
 
-## 1. BOSC
+## BOSC
 The Better oscillation detection (BOSC) method has been widely used to characterise oscillatory activity in continuous data and/or at the single trial level. In brief, the method first computes a "power threshold" and a "duration threshold (DT)" for transient oscillatory burst detection. 
 
 The power threshold is determined by first modelling the background aperiodic (1/f) neural spectrum. For each frequency of interest a probability distribution function is fitted to the (linear) aperiodic fit (using a χ2 distribution). The power threshold is then typically set on the 95th percentile of the χ2(2) distribution. This ensures only quantitativly large increases in neural power (above and beyond the aperiodic signal) are classed as potential 'oscillations'.
@@ -30,7 +30,7 @@ The duration threshold is usually set at 2-3 oscillatory cycles.
 
 In the time domain, if both power and duration thresholds are passed an oscillation is said to be "detected".
 
-## 2. FOOOF (Donoghue et al., 2020)
+## FOOOF (Donoghue et al., 2020)
 
 FOOOF is a fast, efficient, and physiologically-informed tool to parameterize neural power spectra. FOOOF conceives of a model of the power spectrum as a combination of two distinct functional processes:
 
