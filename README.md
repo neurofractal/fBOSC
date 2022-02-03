@@ -5,6 +5,7 @@ tl;dr: This repository contains MATLAB code for combining BOSC and FOOOF
 
 Tutorial script **[HERE](./validation/test_fBOSC.ipynb)**
 
+## Contents
 
 - [fBOSC](#fbosc)
   * [BOSC](#bosc)
