@@ -77,8 +77,8 @@ for s = 1:2
     %% fBOSC
     % Set up BOSC parameters
     cfg                     = [];
-    %cfg.fBOSC.F             = 2.^[1:.125:6];    % frequency sampling
-    cfg.fBOSC.F             = [2:1:50];
+    cfg.fBOSC.F             = 2.^[1:.125:6];    % frequency sampling
+    %cfg.fBOSC.F             = [2:1:50];
     cfg.fBOSC.wavenumber	= 6;           % wavelet family parameter (time-frequency tradeoff)
     cfg.fBOSC.fsample       = Fs;         % current sampling frequency of EEG data
     

@@ -63,16 +63,11 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
         %% Run FOOOF Using MATLAB wrapper for Python
         case 'python'
             % FOOOF settings
-            if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
-                settings = struct();
-                setting.verbose = 0; % Use defaults
-            else
+            if ~strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
                 settings = cfg.fBOSC.fooof;
+                f_range = freqs([1 end]);
+                fooof_results = fooof(freqs, mean_pow, f_range, settings,true);
             end
-            f_range = freqs([1 end]);
-            
-            fooof_results = fooof(freqs, mean_pow, f_range, settings,true);
-            
         case 'matlab'
             %% Run FOOOF using MATLAB Code
             
@@ -235,9 +230,7 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
             
     end
     
-    %% Process Results
-    mp = 10.^fooof_results.ap_fit;
-    
+    %% Process Results    
     % Instead of FOOOF, use original BOSC ordinary least squares regression
     % to find the
     [pv_BOSC,~]=BOSC_bgfit(cfg.fBOSC.F,BG);
@@ -251,6 +244,8 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
         mp = mp_old;
         warning('NOT RECOMMENDED - not using FOOOF');
+    else
+        mp = 10.^fooof_results.ap_fit;
     end
     
     % compute fBOSC power (pt) and duration (dt) thresholds: 
@@ -268,20 +263,22 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     fBOSC.static.bg_log10_pow(cfg.tmp.channel(1),:)         = ...
         mean(log10(BG(:,cfg.fBOSC.pad.total_sample+1:end-cfg.fBOSC.pad.total_sample)),2);
     % aperiodic parameters from fooof
-    fBOSC.static.aperiodic_params(cfg.tmp.channel(1),:)     = ...
-        fooof_results.aperiodic_params;
-    % aperiodic fir from fooof
-    fBOSC.static.ap_fit(cfg.tmp.channel(1),:)     = ...
-        fooof_results.ap_fit;
-    % r squared value from fooof
-    fBOSC.static.r_squared(cfg.tmp.channel(1),:)     = ...
-        fooof_results.r_squared;
-    % error term from fooof
-    fBOSC.static.error(cfg.tmp.channel(1),:)     = ...
-        fooof_results.error;
-    % Fooofed spectrum
-    fBOSC.static.fooofed_spectrum(cfg.tmp.channel(1),:)     = ...
-        fooof_results.fooofed_spectrum;
+    if ~strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
+        fBOSC.static.aperiodic_params(cfg.tmp.channel(1),:)     = ...
+            fooof_results.aperiodic_params;
+        % aperiodic fir from fooof
+        fBOSC.static.ap_fit(cfg.tmp.channel(1),:)     = ...
+            fooof_results.ap_fit;
+        % r squared value from fooof
+        fBOSC.static.r_squared(cfg.tmp.channel(1),:)     = ...
+            fooof_results.r_squared;
+        % error term from fooof
+        fBOSC.static.error(cfg.tmp.channel(1),:)     = ...
+            fooof_results.error;
+        % Fooofed spectrum
+        fBOSC.static.fooofed_spectrum(cfg.tmp.channel(1),:)     = ...
+            fooof_results.fooofed_spectrum;
+    end
     % linear background power at each estimated frequency
     fBOSC.static.mp(cfg.tmp.channel(1),:)            = mp;
     fBOSC.static.mp_old(cfg.tmp.channel(1),:)        = mp_old;
