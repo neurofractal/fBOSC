@@ -35,9 +35,9 @@ end
 
 % Simulate
 cfg                         = [];
-cfg.freq                    = 10; % Simulated a 10Hz oscillation
+cfg.freq                    = 4; % Simulated a 10Hz oscillation
 cfg.amplitude               = SNR; % SNR of the simulated oscillation
-cfg.cycles                  = 6/(1/10); % How many cycles: For 6s
+cfg.cycles                  = 4/(1/4); % How many cycles: For 6s
 cfg.time                    = 20; % 20s of simulated data
 cfg.trial                   = ntrials; % How many 'trials'?
 [aperiodic_out_alpha,...
@@ -96,14 +96,14 @@ fBOSC_fooof_plot(cfg,fBOSC)
 %% Plot the time-series in black alongside detected bursts in red
 
 figure;
-set(gcf,'Position',[100 100 1200 600]);
+set(gcf,'Position',[100 100 1200 100]);
 
-for indTrial = 1:10
+for indTrial = 1:1
     
     % This is the crucial bit of code that gets the detected time(s) of
     % oscillatory bursts from each trial
     tmpDetected = single(squeeze(nanmean(fBOSC.detected(1, ...
-        indTrial,cfg.fBOSC.F > 8 & cfg.fBOSC.F < 13,:),3))>0); ...
+        indTrial,cfg.fBOSC.F > 3 & cfg.fBOSC.F < 5,:),3))>0); ...
         tmpDetected(tmpDetected==0) = NaN;
     
     origData = data_alpha.trial{indTrial}(cfg.fBOSC.channel(1),...
@@ -113,7 +113,7 @@ for indTrial = 1:10
         cfg.fBOSC.pad.total_sample+1:end-cfg.fBOSC.pad.total_sample);
     
     % Plot
-    subplot(10,1,indTrial); hold on;
+    hold on;
     plot(origData_time,squeeze(origData), 'k');
     plot(origData_time,squeeze(origData).*tmpDetected', 'r');
     ylabel({'Power';'(a.u.)'});
@@ -125,6 +125,7 @@ for indTrial = 1:10
     
 end
 
+print('burst_example','-dpng','-r300');
 
 %% Let's plot the same thing but using TFRs
 

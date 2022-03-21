@@ -3,12 +3,16 @@
 
 tl;dr: This repository contains MATLAB code for combining BOSC and FOOOF
 
-Tutorial script **[HERE](./validation/test_fBOSC.ipynb)**
+Tutorial script **[HERE](./custom/test_fBOSC.ipynb)**
+
+## Validation
+
+Scripts to validate fBOSC versus other methods can be found at: https://github.com/neurofractal/fBOSC_validation
 
 ## Contents
 
 - [fBOSC](#fbosc)
-  * [BOSC](#bosc)
+  * [BOSC](#BOSC)
   * [FOOOF (Donoghue et al., 2020)](#fooof--donoghue-et-al--2020-)
   * [So why use FOOOF in combination with BOSC?](#so-why-use-fooof-in-combination-with-bosc-)
   * [Does this really help?](#does-this-really-help-)
@@ -86,11 +90,11 @@ In the worst circumstances, at a particular fixed threshold used in the chi-squa
 
 In our non-linear 1/f simulations, we can get drastically different hit-rates for theta and alpha oscillations when using both BOSC and eBOSC. However fBOSC has very similar hit-rates between theta and alpha *at a given fixed threshold*.
 
-![](./validation/HR_avg.png)
+![](./media/HR_avg.png)
 
 This is the same for false alarm rate:
 
-![](./validation/FA_avg.png)
+![](./media/FA_avg.png)
 
 ## Using fBOSC
 
@@ -123,12 +127,12 @@ As you can see both the eBOSC and fooof_mat folders are present, along with the 
 
 #### **[RAW MATLAB SCRIPT](./custom/test_fBOSC.m)**
 
-#### **[FANCY iPython NOTEBOOK](./validation/test_fBOSC.ipynb)**
+#### **[FANCY iPython NOTEBOOK](./custom/test_fBOSC.ipynb)**
 
 
 ## Code and Citations
 
-Please note, this code is built upon the original BOSC and [extended (eBOSC)](https://github.com/jkosciessa/eBOSC) implementations. These can be found in the /eBOSC folder and eBOSC/external/BOSC folder. Any new code (written by Robert A Seymour) is within /custom /experimental /media /simulation or /validation folders. 
+Please note, this code is built upon the original BOSC and [extended (eBOSC)](https://github.com/jkosciessa/eBOSC) implementations. These can be found in the /eBOSC folder and eBOSC/external/BOSC folder. Any new code (written by Robert A Seymour) is within /custom /experimental /media /simulation folders. 
 
 **The license is GNU General Public License v3.0.**
 
