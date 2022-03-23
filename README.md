@@ -102,26 +102,31 @@ This is the same for false alarm rate:
 
 From [https://github.com/neurofractal/fBOSC](https://github.com/neurofractal/fBOSC)
 
-#### 2. Install FOOOF (a Python package)
+#### 2. FOOOF in Python
 
-The [FOOOF documentation](https://fooof-tools.github.io/fooof/index.html#installation) has clear + simple instructions for installing the package. You will also need to install scipy and numpy.
+FOOOF was originally implemented in Python. The [FOOOF documentation](https://fooof-tools.github.io/fooof/index.html#installation) has clear + simple instructions for installing the package. You will also need to install scipy and numpy.
 
 Getting MATLAB and python to talk properly is tricker. Please refer to this [blog-post](https://irenevigueguix.wordpress.com/2020/03/25/loading-python-into-matlab/) if you are having issues. 
 
 *N.B. On my mac I had to rename /Applications/MATLAB_R2016b.app/sys/os/maci64/libgfortran.3.dylib to libgfortran.3.dylib.old to let Matlab search for the gcc gfortran*
 
-#### COMING SOON: A MATLAB implementation of FOOOF will be used instead of the Python one for ease of use
+**Using the python version of FOOOF is recommended, as the code has been robustly tested in a wide range of scenerios.**
 
-#### 3. Start up fBOSC + run start_fBOSC
+#### 3. FOOOF in MATLAB
+
+We have also implemented a MATLAB-only version of FOOOF, based on code from Brainstorm. To use this simply specify:
+
+```matlab
+cfg.fBOSC.fooof.version           = 'python';
+```
+**This code works, but has not been thoroughly tested within fBOSC. Use at your own risk.**
+
+#### 4. Start up fBOSC + run start_fBOSC
 
 ```matlab
 cd(path_to_fBOSC);
 start_fBOSC
 ```
-
-![](./media/folders.png)
-
-As you can see both the eBOSC and fooof_mat folders are present, along with the fBOSC scripts in the 'custom' folder. 
 
 ## Test scripts
 
