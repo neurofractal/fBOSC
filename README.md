@@ -104,7 +104,11 @@ From [https://github.com/neurofractal/fBOSC](https://github.com/neurofractal/fBO
 
 #### 2. FOOOF in Python
 
-FOOOF was originally implemented in Python. The [FOOOF documentation](https://fooof-tools.github.io/fooof/index.html#installation) has clear + simple instructions for installing the package. You will also need to install scipy and numpy.
+FOOOF was originally implemented in Python. The [FOOOF documentation](https://fooof-tools.github.io/fooof/index.html#installation) has clear + simple instructions for installing the package. You will also need to install scipy and numpy. When using fBOSC specify:
+
+```matlab
+cfg.fBOSC.fooof.version           = 'python';
+```
 
 Getting MATLAB and python to talk properly is tricker. Please refer to this [blog-post](https://irenevigueguix.wordpress.com/2020/03/25/loading-python-into-matlab/) if you are having issues. 
 
@@ -117,7 +121,7 @@ Getting MATLAB and python to talk properly is tricker. Please refer to this [blo
 We have also implemented a MATLAB-only version of FOOOF, based on code from Brainstorm. To use this simply specify:
 
 ```matlab
-cfg.fBOSC.fooof.version           = 'python';
+cfg.fBOSC.fooof.version           = 'matlab';
 ```
 **This code works, but has not been thoroughly tested within fBOSC. Use at your own risk.**
 
