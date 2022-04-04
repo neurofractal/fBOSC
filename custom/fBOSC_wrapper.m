@@ -104,7 +104,7 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
     
     % Some defaults for fooof:
     % Use python implementation by default (for now)
-    if ~isfield(cfg.fBOSC.fooof,'version')
+    if isempty(cfg.fBOSC.fooof.version)
         cfg.fBOSC.fooof.version = 'python';
     end  
     
@@ -211,11 +211,6 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
 
             % encode abundance of fBOSC.episodes (optional)
             fBOSC.abundance_ep(indChan, indTrial,:) = mean(squeeze(fBOSC.detected_ep(indChan, indTrial,:,:)),2);
-
-%           % Supplementary Plot: original eBOSC.detected vs. sparse episode power
-%           figure; 
-%           subplot(121); imagesc(squeeze(eBOSC.detected).*TFR_(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample));
-%           subplot(122); imagesc(squeeze(eBOSC.detected_ep).*TFR_(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample));
 
         end; clear indTrial; % trial loop
 
