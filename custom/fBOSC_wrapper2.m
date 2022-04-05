@@ -13,12 +13,11 @@
 %    https://github.com/jkosciessa/eBOSC
 %__________________________________________________________________________
 
-function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
+function [fBOSC, cfg] = fBOSC_wrapper2(cfg, data)
 % Main fBOSC wrapper function. Executes fBOSC subfunctions.
 %
 % Use as
 %   [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
-%
 % where "data" is a Fieldtrip data structure with trial, time and channel
 % fields.
 
@@ -84,8 +83,8 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
 %               fBOSC.abundance_ep | temporal average of detected rhythms (following episode creation)
 %           cfg | config structure
 
-    fBOSC       = [];
-    fBOSC.label = [];
+    fBOSC           = [];
+    fBOSC.label     = [];
     
     % set some defaults for included channels and trials, if not specified
     if isempty(cfg.fBOSC.channel)
@@ -130,7 +129,6 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
         cfg.fBOSC.fooof.max_peaks =  3;
     end
     
-        
     % min_peak_height for fooof
     if ~isfield(cfg.fBOSC.fooof,'min_peak_height')
         cfg.fBOSC.fooof.min_peak_height =  0.1;
@@ -142,6 +140,22 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
     cfg.fBOSC.pad.total_s = cfg.fBOSC.pad.tfr_s + cfg.fBOSC.pad.detection_s;                    % complete padding (WL + shoulder)
     cfg.fBOSC.pad.total_sample = cfg.fBOSC.pad.tfr_sample + cfg.fBOSC.pad.detection_sample;
     cfg.fBOSC.pad.background_sample = cfg.fBOSC.pad.tfr_sample;
+    
+    % Set up empty array for memory efficiency
+    fBOSC.detected  = zeros(numel(cfg.fBOSC.channel),numel(cfg.fBOSC.trial),...
+        length(cfg.fBOSC.F),length(data.trial{1})-...
+        (cfg.fBOSC.pad.detection_sample*2)-(cfg.fBOSC.pad.detection_sample*2));
+    
+    fBOSC.detected_ep  = zeros(numel(cfg.fBOSC.channel),numel(cfg.fBOSC.trial),...
+        length(cfg.fBOSC.F),length(data.trial{1})-...
+        (cfg.fBOSC.pad.detection_sample*2)-(cfg.fBOSC.pad.detection_sample*2));
+    
+    fBOSC.pepisode  = zeros(numel(cfg.fBOSC.channel),numel(cfg.fBOSC.trial),...
+        length(cfg.fBOSC.F));
+    
+    fBOSC.abundance_ep  = zeros(numel(cfg.fBOSC.channel),numel(cfg.fBOSC.trial),...
+        length(cfg.fBOSC.F));
+
     
     % Start of Channel Loop:
     for indChan = 1: numel(cfg.fBOSC.channel)
@@ -156,18 +170,22 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
         cfg.tmp.channel = indChan; % encode current channel for later
 
         %% Step 1: time-frequency wavelet decomposition for whole signal to prepare background fit
-        TFR = [];
+            
+        % Preallocate memory - 8.4s
+        TFR = zeros(numel(cfg.fBOSC.trial),length(cfg.fBOSC.F),...
+            length(data.trial{1}));
+
         for indTrial = 1:numel(cfg.fBOSC.trial)
-            TFR.trial{indTrial} = BOSC_tf(data.trial{indTrial}...
+            TFR(indTrial,:,:) = BOSC_tf(data.trial{indTrial}...
                 (cfg.fBOSC.channel(indChan),:),cfg.fBOSC.F,...
                 cfg.fBOSC.fsample,cfg.fBOSC.wavenumber);
         end; clear indTrial
         
         %% Step 2: robust background power fit
-        % 6.3s
-        [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC);
-        
+        [fBOSC, pt, dt] = fBOSC_getThresholds2(cfg, TFR, fBOSC);
+
         %% Application of thresholds to single trials
+
         for indTrial = 1:numel(cfg.fBOSC.trial)
 
             cfg.tmp.trial = cfg.fBOSC.trial(indTrial); % encode current trial for later
@@ -177,42 +195,50 @@ function [fBOSC, cfg] = fBOSC_wrapper(cfg, data)
             % transform. Note that a padding fpr detection remains attached so that there
             % is no problems with too few sample points at the edges to
             % fulfill the duration criterion.
-            TFR_ = TFR.trial{indTrial}(:,cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample);
-
+            TFR_ = squeeze(TFR(indTrial,:,...
+                cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample));
+            
             %% Step 3: detect rhythms and calculate Pepisode
 
             % The next section applies both the power and the duration
             % threshold to detect individual rhythmic segments in the continuous signals.
             detected = zeros(size(TFR_));
             for f = 1:length(cfg.fBOSC.F)
-                detected(f,:) = BOSC_detect(TFR_(f,:),pt(f),dt(f),cfg.fBOSC.fsample);
+                detected(f,:) = BOSC_detect...
+                    (TFR_(f,:),pt(f),dt(f),cfg.fBOSC.fsample);
             end; clear f
-
+            
             % remove padding for detection (matrix with padding required for refinement)
-            fBOSC.detected(indChan, indTrial,:,:) = detected(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
+            fBOSC.detected(indChan, indTrial,:,:) = ...
+                detected(:,cfg.fBOSC.pad.detection_sample...
+                +1:end-cfg.fBOSC.pad.detection_sample);
 
             % encode pepisode of detected rhythms (optional)
-            fBOSC.pepisode(indChan, indTrial,:) = mean(fBOSC.detected(indChan, indTrial,:,:),4);
-    
-        
+            fBOSC.pepisode(indChan, indTrial,:) = ...
+                mean(fBOSC.detected(indChan, indTrial,:,:),4);
+            
             %% Copy fBOSC to EBOSC for consistency
             cfg.eBOSC = cfg.fBOSC;
-            
+           
             %% Step 4 (optional): create table of separate rhythmic episodes
-
+            
             cfg.tmp.inputTime = data.time{cfg.tmp.trial};
             cfg.tmp.detectedTime = cfg.tmp.inputTime(cfg.fBOSC.pad.tfr_sample+1:end-cfg.fBOSC.pad.tfr_sample);
             cfg.tmp.finalTime = cfg.tmp.inputTime(cfg.fBOSC.pad.total_sample+1:end-cfg.fBOSC.pad.total_sample);
             
+            
             [fBOSC.episodes, detected_ep] = eBOSC_episode_create(cfg,TFR_,detected,fBOSC);
             
             % remove padding for detection (already done for fBOSC.episodes)
+            
             fBOSC.detected_ep(indChan, indTrial,:,:) = detected_ep(:,cfg.fBOSC.pad.detection_sample+1:end-cfg.fBOSC.pad.detection_sample);
             clear detected_ep;
+            
 
             % encode abundance of fBOSC.episodes (optional)
             fBOSC.abundance_ep(indChan, indTrial,:) = mean(squeeze(fBOSC.detected_ep(indChan, indTrial,:,:)),2);
-
+            
+            clear TFR_
         end; clear indTrial; % trial loop
 
     end % channel loop

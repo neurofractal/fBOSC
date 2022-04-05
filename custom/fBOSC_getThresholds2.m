@@ -31,15 +31,12 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
 %           pt | empirical power threshold
 %           dt | duration threshold
     
-     % Concatenate TFRs into a 3D array
-    % disp('Calculating mean of all TFRs');
-    TFR_pad = [];
-    for tr = 1:length(TFR.trial)
-        TFR_pad{tr} = TFR.trial{tr}(:,cfg.fBOSC.pad.background_sample+1:end-cfg.fBOSC.pad.background_sample);
-    end
     
-    BG = [TFR_pad{:}];
-    
+
+    % Reshape TFR with padding
+    BG = TFR(:,:,cfg.fBOSC.pad.background_sample+1:end-cfg.fBOSC.pad.background_sample);
+    BG = reshape(permute(BG,[2,1,3]),[size(BG,2),size(BG,1)*size(BG,3)]);
+        
     % Get Freqs and  Power
     freqs = cfg.fBOSC.F;
     % For consistency with the rest of the toolbox, the mean is
@@ -229,18 +226,11 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     end
     
     %% Process Results    
-    % Instead of FOOOF, use original BOSC ordinary least squares regression
-    % to find the
-    [pv_BOSC,~]=BOSC_bgfit(cfg.fBOSC.F,BG);
-    
-%     b = robustfit(log10(freqs),mean(log10(BG(:,:)),2)'); clear fitInput;
-%     pv(1) = b(2); pv(2) = b(1);
-    
-    mp_old = 10.^(polyval(pv_BOSC,log10(cfg.fBOSC.F))); 
     
     % Force use of original BOSC mp value rather than FOOOF
     if strcmp(cfg.fBOSC.fooof.aperiodic_mode,'old')
-        mp = mp_old;
+        [pv_BOSC,~]=BOSC_bgfit(cfg.fBOSC.F,BG);
+        mp = 10.^(polyval(pv_BOSC,log10(cfg.fBOSC.F))); 
         warning('NOT RECOMMENDED - not using FOOOF');
     else
         mp = 10.^fooof_results.ap_fit;
@@ -249,7 +239,6 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     % compute fBOSC power (pt) and duration (dt) thresholds: 
     % power threshold is based on a chi-square distribution with df=2 and mean as estimated above
     pt=chi2inv(cfg.fBOSC.threshold.percentile,2)*mp/2; % chi2inv.m is part of the statistics toolbox of Matlab and Octave
-    pt_old=chi2inv(cfg.fBOSC.threshold.percentile,2)*mp_old/2; % chi2inv.m is part of the statistics toolbox of Matlab and Octave
     % duration threshold is the specified number of cycles, so it scales with frequency
     dt=(cfg.fBOSC.threshold.duration*cfg.fBOSC.fsample./cfg.fBOSC.F)';
 
@@ -279,8 +268,6 @@ function [fBOSC, pt, dt] = fBOSC_getThresholds(cfg, TFR, fBOSC)
     end
     % linear background power at each estimated frequency
     fBOSC.static.mp(cfg.tmp.channel(1),:)            = mp;
-    fBOSC.static.mp_old(cfg.tmp.channel(1),:)        = mp_old;
     % statistical power threshold
     fBOSC.static.pt(cfg.tmp.channel(1),:)            = pt;
-    fBOSC.static.pt_old(cfg.tmp.channel(1),:)        = pt_old;
 end
