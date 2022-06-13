@@ -3,13 +3,15 @@ function [aperiodic_out, osc_out, combined,AlphaPlace] = sim_fBOSC(cfg,Fs,aperio
 % oscillatory burst of known duration and amplitude.
 %
 %   INPUTS:
-%   cfg.amplitude   = SNR of oscillatory burst versus aperiodic signal
-%   cfg.cycles      = Number of cycles for oscillation
-%   cfg.time        = Length of each 'trial'
-%   cfg.trial       = Number of trials to simulate
-%   cfg.freq        = Frequency of oscillation
-%   Fs              = Sampling Rate
-%   aperiodic       = aperiodic data (to be changed)
+%   cfg.time         = Length of each 'trial'
+%   cfg.trial        = Number of trials to simulate
+%   cfg.amplitude    = SNR of burst with regard to aperiodic signal
+%   cfg.maxBurstTime = Max total burst time (in seconds, [min max])
+%   cfg.minGap       = Minimum gap between bursts (in seconds)
+%   cfg.cycles       = Number of cycles for the bursts [min max]
+%   cfg.freq         = Frequency of burst
+%   Fs               = Sampling Rate
+%   aperiodic        = aperiodic data (to be changed)
 %
 % % EXAMPLE USEAGE:   [aperiodic_out, osc_out, combined] = sim_fBOSC(cfg,Fs,aperiodic)
 %__________________________________________________________________________
@@ -28,12 +30,21 @@ if ~isfield(cfg, 'amplitude')
 end
 
 if ~isfield(cfg, 'cycles')
-    cfg.cycles = 64;
+    cfg.cycles = [4 8];
 end
 
 if ~isfield(cfg, 'time')
     cfg.time = 20;
 end
+
+if ~isfield(cfg, 'maxBurstTime')
+    cfg.maxBurstTime = [1 2];
+end
+
+if ~isfield(cfg, 'min_gap')
+    cfg.min_gap = 0.5;
+end
+
 
 if ~isfield(cfg, 'trial')
     cfg.trial = 20;
@@ -92,10 +103,66 @@ end
     targetPower = cfg.amplitude*VarBG;
     amplitudeFromRMS = (sqrt(targetPower)*sqrt(2));
     alpha_sim = sin(timeAlpha*2*pi*alphaFreq)*amplitudeFromRMS;
-    osc = zeros(1,numel(time));
-    osc(1,AlphaPlace) = alpha_sim;
+    
+    % We need to make distinct 'bursts'
+    time_so_far  = 0;     
+    bursts       = {};
+    count        = 1;
+    cumul_length = 0;
+    
+    % Make bursts of variable cycle numbers up to cfg.maxBurstTime
+    while time_so_far < cfg.maxBurstTime
+        
+        val       = randi([cfg.cycles(1) cfg.cycles(2)]);
+        cycle_val = round((val/alphaFreq),3);
+
+        timeAlpha = [t:t:cycle_val];
+        
+        bursts{count} = sin(timeAlpha*2*pi*alphaFreq)*amplitudeFromRMS;
+        cumul_length = cumul_length+length(bursts{count});
+        
+        time_so_far = time_so_far+(length(bursts{count})/Fs);
+        count = count+1;
+    end
     
     
+    % Create random gaps (0s) equal to time remaining in the trial
+    % Make sure gaps are longer than cfg.min_gap
+    min_time = 1;
+    while min_time
+        randint = randi([cfg.min_gap*Fs numel(time)-cumul_length],numel(bursts),1);
+        randint = [0 randint' numel(time)-cumul_length];
+        
+        zero_lengths = (diff(sort(randint)));
+        
+        if min(zero_lengths) > cfg.min_gap*Fs
+            min_time = 0;
+        end
+        
+    end
+    
+    % Add each element to trial and create logical array for when a burst
+    % was simulated in the trial
+    osc = [];
+    alpha_sim = zeros(length(aperiodic),1);
+    
+    for b = 1:length(zero_lengths)
+        osc_zero = zeros(1,zero_lengths(b));
+        
+        if b <= length(bursts)
+            osc_zero = horzcat(osc_zero,bursts{b});
+            alpha_sim((length(osc)+zero_lengths(b)):(length(osc)+length(osc_zero))) = 1;
+        end
+        
+        osc = horzcat(osc,osc_zero);
+        
+    end
+    
+    % Figure for debugging
+    % figure; plot(osc); hold on; plot(alpha_sim);
+    
+    % Variables to export
+    AlphaPlace(k,:) = alpha_sim;
     combined.time{k}  = time;
     combined.trial{k} = aperiodic(k,:) + osc;
     osc_out(k,:)      = osc;

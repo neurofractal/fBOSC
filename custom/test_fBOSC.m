@@ -16,7 +16,7 @@ start_fBOSC
 %  non-linear 1/f aperiodic signal
 
 % Load the previously computed non-linear 1/f aperiodic signal
-load(fullfile(root,'..','validation','synaptic.mat'));
+load(fullfile(root,'..','..','fBOSC_validation','synaptic.mat'));
 
 % Settings
 ntrials                     = 10;   % Number of trials 
@@ -35,9 +35,9 @@ end
 
 % Simulate
 cfg                         = [];
-cfg.freq                    = 4; % Simulated a 10Hz oscillation
+cfg.freq                    = 10; % Simulated a 10Hz oscillation
 cfg.amplitude               = SNR; % SNR of the simulated oscillation
-cfg.cycles                  = 4/(1/4); % How many cycles: For 6s
+cfg.cycles                  = 4/(1/10); % How many cycles: For 6s
 cfg.time                    = 20; % 20s of simulated data
 cfg.trial                   = ntrials; % How many 'trials'?
 [aperiodic_out_alpha,...
@@ -60,7 +60,7 @@ title('Combined Data');
 %cfg.fBOSC.F                 = 2.^[1:.125:5.4];
 cfg.fBOSC.F                 = [2:0.5:40];
 cfg.fBOSC.wavenumber        = 6;           % wavelet family parameter (time-frequency tradeoff)
-cfg.fBOSC.fsample           = Fs;         % current sampling frequency of EEG data
+cfg.fBOSC.fsample           = Fs;         % current sampling frequency of data
 
 % padding
 cfg.fBOSC.pad.tfr_s         = 0.1;      % padding following wavelet transform to avoid edge artifacts in seconds (bi-lateral)
@@ -69,7 +69,7 @@ cfg.fBOSC.pad.background_s  = 0.1;      % padding of segments for BG (only avoid
 
 % fooof parameters - fit with fixed line or allow a knee
 cfg.fBOSC.fooof.aperiodic_mode    = 'knee';
-cfg.fBOSC.fooof.version           = 'matlab';
+cfg.fBOSC.fooof.version           = 'python';
 
 % threshold settings
 cfg.fBOSC.threshold.duration	= repmat(3, 1, numel(cfg.fBOSC.F)); % vector of duration thresholds at each frequency (previously: ncyc)
@@ -155,7 +155,7 @@ for indTrial = 1:10
         TFR_,'AlphaData', 0.2);
     set(gca,'YDir','normal');
     xlim([0 20]);
-    ylim([0.4 1.4]);
+    %ylim([0.4 1.4]);
     set(gca,'FontSize',20);
     ylabel({'Power';'(a.u.)'},'FontSize',10);
     set(get(gca,'YLabel'),'Rotation',45);
