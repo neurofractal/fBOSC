@@ -23,7 +23,7 @@ Scripts to validate fBOSC versus other methods can be found at: https://github.c
   * [Acknowledgments:](#acknowledgments-)
 
 ## BOSC
-The Better oscillation detection (BOSC) method has been widely used to characterise oscillatory activity in continuous data and/or at the single trial level. In brief, the method first computes a "power threshold" and a "duration threshold (DT)" for transient oscillatory burst detection. 
+The Better oscillation detection (BOSC) method has been widely used to characterise oscillatory activity in continuous data and/or at the single trial level. In brief, the method first computes a "power threshold" and a "duration threshold" for transient oscillatory burst detection. 
 
 The power threshold is determined by first modelling the background aperiodic (1/f) neural spectrum. For each frequency of interest a probability distribution function is fitted to the (linear) aperiodic fit (using a χ2 distribution). The power threshold is then typically set on the 95th percentile of the χ2(2) distribution. This ensures only quantitativly large increases in neural power (above and beyond the aperiodic signal) are classed as potential 'oscillations'.
 
@@ -146,12 +146,12 @@ Please note, this code is built upon the original BOSC and [extended (eBOSC)](ht
 **The license is GNU General Public License v3.0.**
 
 If you use this code please cite the following:
-```
-Kosciessa, J. Q., Grandy, T. H., Garrett, D. D., & Werkle-Bergner, M. (2020). Single-trial characterization of neural rhythms: Potential and challenges. Neuroimage, 206, 116331.
-```
 
 ```
-Citation for fBOSC coming soon
+Seymour, R,A., Alexander, N.A. & Maguire, E.A. (2022). Robust Estimation of 1/f Activity Improves Oscillatory Burst Detection. European Journal of Neuroscience. http://doi.org/10.1111/ejn.15829.
+
+```
+Kosciessa, J. Q., Grandy, T. H., Garrett, D. D., & Werkle-Bergner, M. (2020). Single-trial characterization of neural rhythms: Potential and challenges. Neuroimage, 206, 116331.
 ```
 
 In addition, please think about citing the original authors of the FOOOF algorithm:
