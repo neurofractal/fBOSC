@@ -1,7 +1,7 @@
 # fBOSC
 ### fooof+BOSC: A repository for the robust detection of oscillations at the single-trial level
 
-[![](<https://img.shields.io/badge/DOI-https://doi.org/10.1111/ejn.15829-blue>)](https://www.doi.org/https://doi.org/10.1111/ejn.15829)
+[![](<https://img.shields.io/badge/DOI-10.1111/ejn.15829-blue>)](https://www.doi.org/10.1111/ejn.15829)
 
 tl;dr: This repository contains MATLAB code for combining BOSC and FOOOF
 
