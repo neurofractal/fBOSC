@@ -68,19 +68,13 @@ The parametisation tools from FOOOF can address these issues. Firstly, FOOOF  pe
 
 ## Does this really help?
 
-YES! 
+YES! Please see **[Seymour et al., (2022)](http://doi.org/10.1111/ejn.15829)** for a full technical validation.
 
-In this example, I have simulated data with a nonlinear aperiodic frequency spectrum, alongside two oscillatory signals at 4Hz and 10Hz. The frequency spectrum is plotted in the thick black line. 
+Figure 1 from the paper shows the different 1/f modelling approaches applied to a power spectrum with non-linear 1/f and multiple oscillatory peaks. 
 
-![](./media/SNR25.png)
+![](./media/fig1.pdf)
 
-The coloured dotted lines are the 1/f fits computed using BOSC (orange, no frequencies excluded) and eBOSC (pink, robustfit and frequencies around the theta and alpha peaks excluded), and fBOSC (blue). 
-
-Because we know apriori, the exact characteristics of the original aperiodic data, we can compute the root mean squared error (RMSE) from the 1/f fits estimated using BOSC, eBOSC and fBOSC:
-
-![](./media/fBOSC_RMSE.png)
-
-The RMSE is consistently lower for fBOSC compared with the other two methods in this example.
+fBOSC is able to model the 1/f with great accuracy despite the shape of this complex power-spectrum. More details are provided in the paper.
 
 ## What are the consequences of a poor 1/f fit?
 
@@ -88,13 +82,7 @@ In the worst circumstances, at a particular fixed threshold used in the chi-squa
 
 **THIS IS NOT IDEAL.** 
 
-In our non-linear 1/f simulations, we can get drastically different hit-rates for theta and alpha oscillations when using both BOSC and eBOSC. However fBOSC has very similar hit-rates between theta and alpha *at a given fixed threshold*.
-
-![](./media/HR_avg.png)
-
-This is the same for false alarm rate:
-
-![](./media/FA_avg.png)
+More details on this can be found in **[Seymour et al., (2022)](http://doi.org/10.1111/ejn.15829)**, Figure 5.
 
 ## Using fBOSC
 
@@ -141,7 +129,7 @@ start_fBOSC
 
 ## Code and Citations
 
-Please note, this code is built upon the original BOSC and [extended (eBOSC)](https://github.com/jkosciessa/eBOSC) implementations. These can be found in the /eBOSC folder and eBOSC/external/BOSC folder. Any new code (written by Robert A Seymour) is within /custom /experimental /media /simulation folders. 
+Please note, this code is built upon the original BOSC and [extended (eBOSC)](https://github.com/jkosciessa/eBOSC) implementations. These can be found in the /eBOSC folder and eBOSC/external/BOSC folder. Any new code (written by Robert A Seymour) is within ```/custom``` ```/experimental``` ```/media``` ```/simulation``` folders. 
 
 **The license is GNU General Public License v3.0.**
 
