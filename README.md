@@ -136,15 +136,15 @@ Please note, this code is built upon the original BOSC and [extended (eBOSC)](ht
 If you use this code please cite the following:
 
 
-#### **Seymour, R,A., Alexander, N.A. & Maguire, E.A. (2022). Robust Estimation of 1/f Activity Improves Oscillatory Burst Detection. European Journal of Neuroscience. http://doi.org/10.1111/ejn.15829.**
+### **Seymour, R,A., Alexander, N.A. & Maguire, E.A. (2022). Robust Estimation of 1/f Activity Improves Oscillatory Burst Detection. European Journal of Neuroscience. http://doi.org/10.1111/ejn.15829.**
 
-#### Kosciessa, J. Q., Grandy, T. H., Garrett, D. D., & Werkle-Bergner, M. (2020). Single-trial characterization of neural rhythms: Potential and challenges. Neuroimage, 206, 116331.
+### Kosciessa, J. Q., Grandy, T. H., Garrett, D. D., & Werkle-Bergner, M. (2020). Single-trial characterization of neural rhythms: Potential and challenges. Neuroimage, 206, 116331.
 
 
 In addition, please think about citing the original authors of the FOOOF algorithm:
 
 
-#### Donoghue, T., Haller, M., Peterson, E. J., Varma, P., Sebastian, P., Gao, R., ... & Voytek, B. (2020). Parameterizing neural power spectra into periodic and aperiodic components. Nature Neuroscience, 23(12), 1655-1665.
+### Donoghue, T., Haller, M., Peterson, E. J., Varma, P., Sebastian, P., Gao, R., ... & Voytek, B. (2020). Parameterizing neural power spectra into periodic and aperiodic components. Nature Neuroscience, 23(12), 1655-1665.
 
 ## Acknowledgments:
 
