@@ -72,7 +72,7 @@ YES! Please see **[Seymour et al., (2022)](http://doi.org/10.1111/ejn.15829)** f
 
 Figure 1 from the paper shows the different 1/f modelling approaches applied to a power spectrum with non-linear 1/f and multiple oscillatory peaks. 
 
-![](./media/fig1.pdf)
+![](./media/fig1-1.png)
 
 fBOSC is able to model the 1/f with great accuracy despite the shape of this complex power-spectrum. More details are provided in the paper.
 
